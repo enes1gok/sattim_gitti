@@ -9,5 +9,3 @@ Created with the built-in imagegen tool. All depicted findings are fictional sam
 Reference: `../../qa/design-reference.png` (user-selected first generated design).
 
 UI icons: Phosphor React, https://github.com/phosphor-icons/react. Font: locally bundled Inter Variable via Fontsource.
-
-3D model: `models/demo-suv.glb` is a real CC0 Kenney mesh, separate from the generated raster images. See `models/README.md` for provenance and processing details.

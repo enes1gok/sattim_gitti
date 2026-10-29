@@ -14,24 +14,16 @@ npm run dev -- --host 127.0.0.1 --port 4173
 
 ## Çalışan akışlar
 
-- Çapraz/üstten araç görünümleri ve iki seçilebilir parça.
-- “3D” düğmesiyle açılan gerçek mesh görüntüleyici: sürükleme, döndürme, yakınlaştırma, üstten bakış, sıfırlama ve klavye kontrolleri.
-- Kenney CC0 genel SUV demosundaki parça işaretleri ve parça detayından modele dönüş.
-- En fazla 20 MB, kendi içinde tüm dokularını içeren GLB 2.0 dosyalarını yerel olarak açma; model yüklemede otomatik parça eşleştirmesi yapılmaz.
 - Fiyat/versiyon/konum ve ikonlu yıl, kilometre, vites, yakıt özeti.
 - Açılır motor/teknik, kategorili donanım, ekspertiz/geçmiş ve ilan/satıcı bölümleri.
-- Kaynağı açıkça örnek olarak gösterilen çizik fotoğrafı; incelenmeyen kaput durumu.
 - Çoklu fotoğraf seçimi, silme ve dosya doğrulaması: JPG/PNG/WebP, dosya başına 12 MB, en fazla 8 fotoğraf.
 - Beyaz Keşfet ana ekranı: kelime araması, üç hızlı kısayol, aramaya devam et kartı ve büyük fotoğraflı ilan kartı.
 - Alttan açılan bütçe/konum/vites/kasa filtreleri; değişiklikleri uygulama veya vazgeçme, sonuçsuz aramayı sıfırlama.
 - Keşfet / Takip / Favoriler / Hesabım navigasyonu; kayıtlı aramalar, kalıcı favoriler ve bildirim tercihleri. Gerçek bildirim gönderilmez.
-- Sağ üstte her ekranda Araç sat girişi; fotoğraf hazırlama ve mevcut tarama akışına geçiş. İlan yayınlama bağlı değildir.
-- Yönlendirmeli 3D tarama: iki tur, sekiz yön, bölüm başına en az dört ardışık kare. Kamera/galeri, tekrar ve çözünürlük kontrolü, ışık/netlik ön uyarıları, IndexedDB ile taslak kurtarma.
-- Yerel Mac Object Capture işi, gerçek ilerleme, iptal, başarısızlık sonrası tekrar deneme, OBJ → GLB dönüşümü, model görüntüleme ve indirme.
+- Sağ üstte her ekranda Araç sat girişi; fotoğraf ekleme ve silme. İlan yayınlama bağlı değildir.
 
-Son arama, takip edilen aramalar, bildirim seçimleri ve örnek ilan favorisi bu tarayıcının localStorage alanında saklanır. İlan fotoğrafları ve elle açılan modeller oturum belleğindedir. Yönlendirmeli tarama taslağı bu tarayıcının IndexedDB alanında kullanıcı silene kadar saklanır. “3D model oluştur” ile çekimler yalnızca aynı Mac'teki yerel servise aktarılır; üçüncü taraf bulutuna gönderilmez. Sunucu kopyaları 24 saat sonra, servis çalışırken en fazla bir dakikalık gecikmeyle veya sonraki açılışta silinir.
+Son arama, takip edilen aramalar, bildirim seçimleri ve örnek ilan favorisi localStorage alanında saklanır. İlan fotoğrafları bu oturumda cihazda tutulur; sayfa yenilenince kaybolur. Fotoğraflardan otomatik analiz veya model üretilmez.
 
-Gerçek hasar/boya tespiti bağlı değildir. 3D demo ilandaki Jeep'in birebir modeli değildir; kendi çekimlerinden üretilen model demo işaretlerini devralmaz. 64 kare başlangıç eşiğidir; başarılı rekonstrüksiyonu garanti etmez. Aynı gerçek aracın 128 fotoğrafıyla motor → GLB → Chrome görüntüleme testi tamamlandı; yüzey/ölçü doğruluğu ve fiziksel kamera akışı ayrıca doğrulanmalıdır. [Gerçek araç testi](mobile-prototype/qa/real-car-test.md).
 
 ## Doğrulama
 
@@ -39,15 +31,17 @@ Gerçek hasar/boya tespiti bağlı değildir. 3D demo ilandaki Jeep'in birebir m
 cd mobile-prototype
 npm run build
 npm run check:runtime
-npm run test:reconstruction
 ```
 
 Tarayıcı kontrolü ve görsel karşılaştırma: `mobile-prototype/design-qa.md`.
 
-Yerel fotoğraftan 3D servisi, kurulum ve test sınırları: [Reconstruction README](mobile-prototype/server/README.md). Bu geliştirme hattı aynı Mac üzerinde çalışır; internet üzerinden telefonlara hizmet veren üretim altyapısı veya mağaza uygulaması değildir.
 
 ## Örnek ilan verisi
 
 `mobile-prototype/src/listing-data.ts` fiyat, kilometre, donanım ve satıcı açıklaması için kurgusal veri kullanır. Sahibinden veya Arabam.com ile veri entegrasyonu yoktur. Belge sunulmayan hasar/boya/bakım alanları bilinmiyor veya belge bekleniyor olarak görünür.
 
 1.3 T4 150 HP DCT FWD motor bilgileri için [Jeep 2021 Compass kataloğu](https://www.jeep.com.tr/content/dam/jeep/tr/kataloglar/2021/eylul/Compass_MY21_80p_TR_REV_KULAKCIKSIZ_2_.pdf) referans alınmıştır; bu, örnek aracın kimliğini, donanımını veya durumunu doğrulamaz.
+
+## Branch ayrımı
+
+Ana geliştirme `main` üzerinde fotoğraf yükleme akışıyla devam eder. Deneysel 3D görüntüleme, yönlendirmeli çekim ve yerel model işleyicisi `codex/vehicle-3d-lab` branch’inde (`32f23bd`) saklanır. 3D bağımlılıkları ve servisleri ana uygulamada çalışmaz.

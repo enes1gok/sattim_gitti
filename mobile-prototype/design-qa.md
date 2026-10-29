@@ -244,3 +244,8 @@ Implementation checklist: preserve runtime [x]; guided capture and recovery [x];
 Implementation checklist: search-first home [x]; draft bottom-sheet filters [x]; four tabs and local recovery [x]; persistent selling entry [x]; preserved listing/3D/capture flows [x]; keyboard and both device presets [x]; final visual comparison and build [x].
 
 final result: passed
+
+
+## 29 Ekim — fotoğraf akışını ana branch’te tutma
+
+Kullanıcının isteğiyle 3D modelleme `codex/vehicle-3d-lab` (`32f23bd`) branch’ine ayrıldı. Main üzerinde model/GLB/tarama girişleri ve ilgili istemci/işleyici bağımlılıkları kaldırıldı. Fotoğraf ekleme/silme, ilan bilgileri, arama/takip ve satış rehberi korundu. Önceki 3D ekran ve test kayıtları tarihsel kanıttır; ana branch’in güncel işlevleri değildir.

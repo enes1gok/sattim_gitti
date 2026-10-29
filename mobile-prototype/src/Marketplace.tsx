@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRightIcon, BellIcon, BookmarkSimpleIcon, CameraIcon, CarProfileIcon, CaretRightIcon, ClockCounterClockwiseIcon, CubeIcon, GearIcon, HeartIcon, MagnifyingGlassIcon, MapPinIcon, SlidersHorizontalIcon, UserIcon, WalletIcon, XIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon, BellIcon, BookmarkSimpleIcon, CameraIcon, CarProfileIcon, CaretRightIcon, ClockCounterClockwiseIcon, GearIcon, HeartIcon, MagnifyingGlassIcon, MapPinIcon, SlidersHorizontalIcon, UserIcon, WalletIcon, XIcon } from "@phosphor-icons/react";
 import { BottomSheet, Carousel, KeyboardInput, MobileScroll, useKeyboard } from "./mobile";
 import { demoListing } from "./listing-data";
 
@@ -49,13 +49,11 @@ type Props = {
   onFavorite: () => void;
   onListing: () => void;
   onNavigate: (tab: MarketplaceTab) => void;
-  onCapture: () => void;
   onPhotos: () => void;
   photoCount: number;
-  scanCount: number;
 };
 
-export default function Marketplace({ activeTab, favorite, onFavorite, onListing, onNavigate, onCapture, onPhotos, photoCount, scanCount }: Props) {
+export default function Marketplace({ activeTab, favorite, onFavorite, onListing, onNavigate, onPhotos, photoCount }: Props) {
   const keyboard = useKeyboard();
   const [preferences, setPreferences] = useState(loadPreferences);
   const [query, setQuery] = useState(() => preferences.lastSearch?.query ?? "");
@@ -84,7 +82,7 @@ export default function Marketplace({ activeTab, favorite, onFavorite, onListing
   function listingCard() {
     return <article className="market-listing">
       <div className="market-listing-visual"><button className="market-listing-image" aria-label="Jeep Compass örnek ilanını incele" onClick={onListing}><img src="/assets/car-front.png" alt="Gümüş Jeep Compass, örnek ilan görseli" draggable={false} /></button><span className="market-example">Örnek ilan</span><button className="card-favorite icon-button" aria-label={favorite ? "Favorilerden çıkar" : "Favorilere ekle"} aria-pressed={favorite} onClick={onFavorite}><HeartIcon size={23} weight={favorite ? "fill" : "regular"} /></button></div>
-      <button className="market-listing-info" onClick={onListing}><div><strong>{demoListing.price} ₺</strong><CubeIcon size={20} weight="light" /></div><h3>{demoListing.name}</h3><p>{demoListing.year} · {demoListing.mileage} km · {demoListing.transmission}</p><span><MapPinIcon size={13} />{demoListing.location}<CaretRightIcon size={17} /></span></button>
+      <button className="market-listing-info" onClick={onListing}><div><strong>{demoListing.price} ₺</strong><CameraIcon size={20} weight="light" /></div><h3>{demoListing.name}</h3><p>{demoListing.year} · {demoListing.mileage} km · {demoListing.transmission}</p><span><MapPinIcon size={13} />{demoListing.location}<CaretRightIcon size={17} /></span></button>
     </article>;
   }
   function emptyState(icon: "heart" | "search" | "bookmark", heading: string, copy: string) {
@@ -124,7 +122,7 @@ export default function Marketplace({ activeTab, favorite, onFavorite, onListing
         </>}
         {activeTab === "favorites" && <><div className="market-heading"><span className="eyebrow">AKLINDA KALANLAR</span><h1>Favorilerin.</h1><p>Beğendiğin araçlar bir arada.</p></div>{favorite ? listingCard() : emptyState("heart", "İlk favorin seni bekliyor.", "Bir ilandaki kalbe dokun; yeniden aramadan buradan ulaş.")}</>}
         {activeTab === "tracking" && <><div className="market-heading"><span className="eyebrow">SENİN KRİTERLERİN</span><h1>Takip ettiklerin.</h1><p>Aramalarını kaydet, kaldığın yerden devam et.</p></div>{preferences.followed.length ? <div className="followed-list">{preferences.followed.map((search, index) => <article key={JSON.stringify(search)}><BookmarkSimpleIcon size={23} weight="light" /><button onClick={() => runSearch(search)}><strong>{search.query.trim() || "Araç aramam"}</strong><small>{searchSummary(search)}</small><span>Aramayı aç<ArrowRightIcon size={15} /></span></button><button className="icon-button" aria-label={`${index + 1}. aramayı takipten çıkar`} onClick={() => toggleFollow(search)}><XIcon size={19} /></button></article>)}</div> : emptyState("bookmark", "Aramanı bir kez kaydet.", "Arama sonuçlarında “Aramayı takip et” seçeneğine dokun. Kriterlerin burada seni beklesin.")}<button className="market-setting-row" onClick={() => setPanel("notifications")}><BellIcon size={23} weight="light" /><span><strong>Bildirim tercihlerin</strong><small>Yalnızca ilgilendiğin gelişmeler</small></span><CaretRightIcon size={18} /></button></>}
-        {activeTab === "account" && <><div className="market-heading"><span className="eyebrow">SANA AİT ALAN</span><h1>Hoş geldin.</h1><p>Üye olmadan keşfetmeye devam et.</p></div><div className="market-profile"><span><UserIcon size={30} weight="light" /></span><div><strong>Misafir olarak keşfediyorsun</strong><p>Seçimlerin bu tarayıcıda saklanır.</p></div></div><div className="market-account-rows"><button className="market-setting-row" onClick={() => onNavigate("favorites")}><HeartIcon size={23} weight="light" /><span><strong>Favorilerin</strong></span><small>{favorite ? "1 araç" : "Henüz yok"}</small><CaretRightIcon size={18} /></button><button className="market-setting-row" onClick={() => onNavigate("tracking")}><BookmarkSimpleIcon size={23} weight="light" /><span><strong>Takip ettiğin aramalar</strong></span><small>{preferences.followed.length}</small><CaretRightIcon size={18} /></button><button className="market-setting-row" onClick={onCapture}><CubeIcon size={23} weight="light" /><span><strong>{scanCount ? "Taramana devam et" : "Aracını 3D tara"}</strong><small>{scanCount ? `${scanCount} fotoğraf kaydedildi` : "Kendi aracını her açıdan kaydet"}</small></span><CaretRightIcon size={18} /></button><button className="market-setting-row" onClick={onPhotos}><CameraIcon size={23} weight="light" /><span><strong>İlan fotoğrafların</strong><small>Yalnızca bu oturumda tutulur</small></span><small>{photoCount}</small><CaretRightIcon size={18} /></button><button className="market-setting-row" onClick={() => setPanel("notifications")}><BellIcon size={23} weight="light" /><span><strong>Bildirim tercihlerin</strong></span><CaretRightIcon size={18} /></button></div></>}
+        {activeTab === "account" && <><div className="market-heading"><span className="eyebrow">SANA AİT ALAN</span><h1>Hoş geldin.</h1><p>Üye olmadan keşfetmeye devam et.</p></div><div className="market-profile"><span><UserIcon size={30} weight="light" /></span><div><strong>Misafir olarak keşfediyorsun</strong><p>Seçimlerin bu tarayıcıda saklanır.</p></div></div><div className="market-account-rows"><button className="market-setting-row" onClick={() => onNavigate("favorites")}><HeartIcon size={23} weight="light" /><span><strong>Favorilerin</strong></span><small>{favorite ? "1 araç" : "Henüz yok"}</small><CaretRightIcon size={18} /></button><button className="market-setting-row" onClick={() => onNavigate("tracking")}><BookmarkSimpleIcon size={23} weight="light" /><span><strong>Takip ettiğin aramalar</strong></span><small>{preferences.followed.length}</small><CaretRightIcon size={18} /></button><button className="market-setting-row" onClick={onPhotos}><CameraIcon size={23} weight="light" /><span><strong>İlan fotoğrafların</strong><small>Yalnızca bu oturumda tutulur</small></span><small>{photoCount}</small><CaretRightIcon size={18} /></button><button className="market-setting-row" onClick={() => setPanel("notifications")}><BellIcon size={23} weight="light" /><span><strong>Bildirim tercihlerin</strong></span><CaretRightIcon size={18} /></button></div></>}
         {storageError && <p className="market-data-note" role="status">Tarayıcı depolaması kullanılamıyor. Arama tercihlerin bu oturumla sınırlı.</p>}
       </main>
     </MobileScroll>

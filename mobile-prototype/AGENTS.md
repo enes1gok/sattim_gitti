@@ -5,30 +5,23 @@
 - The user selected generated visual option 1: white Uber-inspired UI, large silver SUV, restrained amber findings, minimal icons and short Turkish labels.
 - Visual source: `qa/design-reference.png`. App UI lives in `src/Prototype.tsx` and `src/prototype.css`.
 - This deliverable is a browser-based mobile interaction prototype with iPhone and Pixel previews. It is not an Expo/native app build.
-- The main listing retains generated perspective/top images. A separate, lazy-loaded Three.js viewer renders a real generic Kenney CC0 SUV mesh with orbit/zoom/top/reset controls and predefined example part markers. Keep demo identity explicit; it is not the listing's exact Jeep or generated from uploaded photos. Guided capture now connects to local reconstruction; automatic damage/paint analysis remains unimplemented.
-- Example findings must remain labelled as examples, and uploaded photos must not acquire fabricated analysis results. Ordinary listing photos remain in session memory. Guided scan drafts persist in IndexedDB and connect to the same-Mac reconstruction service only when the user starts generation.
 - Preserve the app-level device-shell scroll guard: portalled modal autofocus must not shift status bars and keyboard assets into view.
-- The user wants comprehensive marketplace listing information while retaining the selected white design. Show price/model/location first, four compact icon-led key facts, then expandable technical, equipment, history and seller sections. Keep the vehicle preview and existing photo flows.
+- The user wants comprehensive marketplace listing information while retaining the selected white design. Show price/model/location first, four compact icon-led key facts, then expandable technical, equipment, history and seller sections. Keep the vehicle photo and existing upload flow.
 - `src/listing-data.ts` contains explicitly fictional listing data. Catalogue specifications must remain distinct from unverified seller/vehicle information; missing history must never become a positive condition claim.
-- The user explicitly selected the real 3D viewer as the next step. `src/Vehicle3D.tsx` owns the on-demand viewer; `src/model-file.ts` validates self-contained GLB 2.0 files (20 MB maximum). Uploaded models have no automatic part mapping and must not inherit demo markers. Local model files are not uploaded.
 
 ## Marketplace UI decisions
 
 - The user approved the 28 October screenshot's written design decisions: white surfaces, black text, light gray areas, one prominent black search/continue action, 14–20px surface radii, search + three shortcuts + resume search, bottom-sheet filters, large listing photos with clear price/short facts, and four tabs: Keşfet / Takip / Favoriler / Hesabım. Keep an Araç sat entry at the upper right.
-- `src/Marketplace.tsx` owns the search, filter draft, results, followed searches, favorites/account views and notification preferences. `Prototype.tsx` owns the shared header/navigation, listing detail and existing photo/3D/capture sheets. Keep marketplace state mounted while opening the listing.
-- Search currently filters only the fictional Jeep listing. Do not suggest live marketplace results, published listings, real authentication or real notifications. Araç sat connects to photo preparation and guided capture; publication remains unconnected.
-- Last executed search, followed search criteria, notification choices and the example favorite persist in localStorage on this browser. Plain listing photos remain session-only; scan drafts retain their existing IndexedDB persistence. Notifications default off and no OS permission is requested.
+- `src/Marketplace.tsx` owns the search, filter draft, results, followed searches, favorites/account views and notification preferences. `Prototype.tsx` owns the shared header/navigation, listing detail and photo sheets. Keep marketplace state mounted while opening the listing.
+- Search currently filters only the fictional Jeep listing. Do not suggest live marketplace results, published listings, real authentication or real notifications. Araç sat connects to photo preparation; publication remains unconnected.
+- Last executed search, followed search criteria, notification choices and the example favorite persist in localStorage on this browser. Listing photos remain session-only. Notifications default off and no OS permission is requested.
 - Filter changes remain drafts until Sonuçları göster; dismissing the sheet discards pending changes. MobileScroll already subtracts keyboard height: app-owned marketplace bounds reserve only navigation/safe areas, avoiding double keyboard subtraction. Preserve the app-owned focus handling so a blur cannot move a button during its tap.
 
-## Guided capture decisions
+## Photo upload and branch scope
 
-- The user clarified that their own photographed vehicle must be reconstructed. A generic mesh does not fulfill that outcome. `CaptureFlow.tsx` and `CaptureCamera.tsx` implement guided camera/gallery capture in the approved white UI.
-- Two passes, eight directions, four sequential photos per section is an initial capture plan; do not imply the app measures geometric overlap or guarantees model quality. Quality warnings are advisory.
-- `capture-policy.ts` is shared by client/server. JPG/PNG, minimum 1600 × 900 px, 12 MB/photo, 160 photos and 512 MB/session. Identical files cannot fill different angles.
-- Scan drafts persist locally until deleted. No third-party photo upload. Local server copies expire at 24 hours; see `server/README.md` for sweep timing and operational constraints.
-- `server/reconstruction.mjs` binds loopback 4180, accepts only the preview origin and invokes actual Apple Object Capture (`server/native/Reconstruct.swift`). OBJ/dokular convert to embedded GLB with Cesium obj2gltf. `.local/` contains private scans and compiled binaries and must remain outside git.
-- Ready/failed/progress must come from real jobs; never simulate successful reconstruction. User models never inherit sample annotations. A 128-photo real Volkswagen test now passed native reconstruction → GLB → Chrome rendering (reduced/medium comparison); see `qa/real-car-test.md`. Surface/measurement/damage accuracy and the physical guided camera flow are not certified. Source photos/models stay under git-ignored `.local/real-car-test/`, not shipped app assets. The production reduced preset was preserved.
-- This is a local development pipeline, not a public multi-user service. Static hosting does not deploy the Node/Swift worker. Native iOS/Android apps and production infrastructure remain separate work.
+- The user explicitly moved all 3D development to `codex/vehicle-3d-lab`. Main development must provide only ordinary photo upload: no model viewer/import, guided scanning, reconstruction service, automatic damage findings or 3D dependencies. Do not reintroduce those features on main without an explicit request.
+- Photo selection, validation, preview and removal live in `Prototype.tsx`. JPG/PNG/WebP; 12 MB per file, maximum 8 files. Photos remain in session memory and are not sent to a server by this flow. Do not imply a pending automatic analysis.
+- Existing git-ignored source scans, compiled tools and historical IndexedDB drafts are preserved; main never starts or reads the old reconstruction flow. The experimental branch contains the reconstruction source and tests.
 
 ## Prototype Instructions
 
