@@ -23,11 +23,14 @@
 ## Guided capture decisions
 
 - The user clarified that their own photographed vehicle must be reconstructed. A generic mesh does not fulfill that outcome. `CaptureFlow.tsx` and `CaptureCamera.tsx` implement guided camera/gallery capture in the approved white UI.
-- Two passes, eight directions, four sequential photos per section is an initial capture plan; do not imply the app measures geometric overlap or guarantees model quality. Quality warnings are advisory.
+- Three passes (normal/high/low), eight directions and six sequential photos per section is a 144-photo capture plan; do not imply the app measures geometric overlap or guarantees model quality. Quality warnings are advisory.
 - `capture-policy.ts` is shared by client/server. JPG/PNG, minimum 1600 × 900 px, 12 MB/photo, 160 photos and 512 MB/session. Identical files cannot fill different angles.
 - Scan drafts persist locally until deleted. No third-party photo upload. Local server copies expire at 24 hours; see `server/README.md` for sweep timing and operational constraints.
 - `server/reconstruction.mjs` binds loopback 4180, accepts only the preview origin and invokes actual Apple Object Capture (`server/native/Reconstruct.swift`). OBJ/dokular convert to embedded GLB with Cesium obj2gltf. `.local/` contains private scans and compiled binaries and must remain outside git.
-- Ready/failed/progress must come from real jobs; never simulate successful reconstruction. User models never inherit sample annotations. A 128-photo real Volkswagen test now passed native reconstruction → GLB → Chrome rendering (reduced/medium comparison); see `qa/real-car-test.md`. Surface/measurement/damage accuracy and the physical guided camera flow are not certified. Source photos/models stay under git-ignored `.local/real-car-test/`, not shipped app assets. The production reduced preset was preserved.
+- Ready/failed/progress must come from real jobs; never simulate successful reconstruction. User models never inherit sample annotations. The user rejected the low model quality: native output now uses custom detail (250k polygon / 8K texture ceilings, actual output depends on source) with bounded 4K/JPEG mobile delivery, rather than reduced. Photo-baked unlit colours must not receive a second filmic tone map. Supported browsers prefer ImageCapture stills; physical camera QA remains outstanding.
+- An optional **Gerçekçi görünüm hazırla** step learns Gaussian appearance locally with Brush from photo-estimated poses/intrinsics and sparse points (macOS 26); it is separate from the immediately usable GLB. Keep real job status, preserve the geometry on training failure, stop both jobs on scan deletion, and retain the same privacy/retention rules. `VehicleAppearance.tsx` uses lazily loaded Spark with on-demand drawing; user models have no sample findings. Frame and filter against actual mesh surfaces, not Object Capture's padded capture volume. Never imply image quality proves damage or paint accuracy.
+- Gaussian training must use foreground alpha masks projected from the actual reconstructed mesh into each calibrated photo (`RenderMasks.swift`). Training on the full background caused ghosting and ground streaks; post-cropping alone did not fix it. Keep original photos intact, rescale camera intrinsics with training images, and preserve GLB fallback. Initial framing must account for perspective depth rather than guessing a fixed camera distance.
+- The 128-photo real Volkswagen comparison and Gaussian run are documented in `qa/real-car-test.md`. Surface/measurement/damage accuracy and the physical guided camera flow are not certified. Source photos/models and screenshots stay under git-ignored `.local/real-car-test/`, not shipped app assets. Remaining reflective-window and ground artifacts must be reported honestly; do not replace them with generated car imagery.
 - This is a local development pipeline, not a public multi-user service. Static hosting does not deploy the Node/Swift worker. Native iOS/Android apps and production infrastructure remain separate work.
 
 ## Prototype Instructions
@@ -99,3 +102,7 @@ When any text-entry control loses focus, dismiss the simulated keyboard. If the 
 - Fixed phone chrome should not animate with pushed screens. Screen content can animate; the status bar, camera cutout, and preview chrome should stay put.
 - Keep the keyboard below the home indicator/safe area layer in z-index, and above ordinary app UI while visible.
 - Keep the home indicator as the topmost safe-area layer in the z-index above everything else in the prototype.
+
+## Branch scope
+
+- Experimental photo-to-3D work is isolated on `codex/vehicle-3d-lab`. Main development keeps only photo upload. Preserve that separation.

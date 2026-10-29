@@ -352,3 +352,5 @@
 .sell-content .market-data-note { margin-top: 4px; }
 .bottom-sheet:has(.market-filters, .notification-preferences, .sell-content) button:focus-visible,
 .notification-preferences input:focus-visible { outline: 2px solid #111 !important; outline-offset: 3px; }
+
+.scan-capture-passes { grid-template-columns: repeat(3, minmax(0, 1fr)); }

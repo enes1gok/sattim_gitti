@@ -1,0 +1,31 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import sharp from "sharp";
+import { convertMobileModel } from "../server/mobile-model.mjs";
+import { validateModelFile } from "../src/model-file.ts";
+
+test("mobile packaging preserves mesh data and colour resolution in a self-contained JPEG GLB", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "sattim-atlas-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  await writeFile(join(directory, "model.obj"), "mtllib model.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nvt 1 0\nvt 0 1\nusemtl car\nf 1/1 2/2 3/3\n");
+  await writeFile(join(directory, "model.mtl"), "newmtl car\nmap_Kd baked_mesh_test_tex0.png\n");
+  await sharp({ create: { width: 128, height: 64, channels: 3, background: "#a73319" } }).png().toFile(join(directory, "baked_mesh_test_tex0.png"));
+  const glb = await convertMobileModel(directory);
+  validateModelFile(Uint8Array.from(glb).buffer);
+  const jsonLength = glb.readUInt32LE(12);
+  const json = JSON.parse(glb.subarray(20, 20 + jsonLength));
+  assert.equal(json.accessors[json.meshes[0].primitives[0].indices].count, 3);
+  assert.ok(json.materials[0].extensions.KHR_materials_unlit);
+  const image = json.images[0];
+  assert.equal(image.mimeType, "image/jpeg");
+  const view = json.bufferViews[image.bufferView];
+  const offset = 28 + jsonLength + (view.byteOffset || 0);
+  const texture = glb.subarray(offset, offset + view.byteLength);
+  const metadata = await sharp(texture).metadata();
+  assert.deepEqual([metadata.width, metadata.height], [128, 64]);
+  const { data } = await sharp(texture).raw().toBuffer({ resolveWithObject: true });
+  assert.ok(Math.abs(data[0] - 167) <= 3 && Math.abs(data[1] - 51) <= 3 && Math.abs(data[2] - 25) <= 3);
+});

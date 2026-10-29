@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build:reconstruction": "mkdir -p .local/bin && xcrun swiftc -parse-as-library -O -module-cache-path /private/tmp/sattim-swift-module-cache server/native/Reconstruct.swift -o .local/bin/reconstruct",
+    "build:reconstruction": "mkdir -p .local/bin && xcrun swiftc -parse-as-library -O -module-cache-path /private/tmp/sattim-swift-module-cache server/native/Reconstruct.swift server/native/AppearanceExport.swift -o .local/bin/reconstruct && xcrun swiftc -parse-as-library -O -module-cache-path /private/tmp/sattim-swift-module-cache server/native/RenderMasks.swift -o .local/bin/render-masks",
     "dev:reconstruction": "node server/reconstruction.mjs",
-    "test:reconstruction": "node --test tests/model-file.test.ts tests/capture-policy.test.ts tests/reconstruction.test.mjs",
+    "test:reconstruction": "node --test tests/model-file.test.ts tests/capture-policy.test.ts tests/reconstruction.test.mjs tests/mobile-model.test.mjs tests/camera-still.test.mjs tests/appearance.test.mjs tests/vehicle-camera.test.mjs",
     "check:runtime": "node scripts/check-mobile-runtime.mjs",
     "update:runtime-lock": "node scripts/update-mobile-runtime-lock.mjs",
     "test:runtime": "playwright test",
@@ -30,7 +30,8 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "sharp": "0.35.5",
-    "three": "0.186.1"
+    "three": "0.186.1",
+    "@sparkjsdev/spark": "2.4.0"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",

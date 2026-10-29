@@ -26,12 +26,12 @@ npm run dev -- --host 127.0.0.1 --port 4173
 - Alttan açılan bütçe/konum/vites/kasa filtreleri; değişiklikleri uygulama veya vazgeçme, sonuçsuz aramayı sıfırlama.
 - Keşfet / Takip / Favoriler / Hesabım navigasyonu; kayıtlı aramalar, kalıcı favoriler ve bildirim tercihleri. Gerçek bildirim gönderilmez.
 - Sağ üstte her ekranda Araç sat girişi; fotoğraf hazırlama ve mevcut tarama akışına geçiş. İlan yayınlama bağlı değildir.
-- Yönlendirmeli 3D tarama: iki tur, sekiz yön, bölüm başına en az dört ardışık kare. Kamera/galeri, tekrar ve çözünürlük kontrolü, ışık/netlik ön uyarıları, IndexedDB ile taslak kurtarma.
+- Yönlendirmeli 3D tarama: üç tur, sekiz yön, bölüm başına altı ardışık kare (144 fotoğraf). Kamera/galeri, tekrar ve çözünürlük kontrolü, ışık/netlik ön uyarıları, IndexedDB ile taslak kurtarma.
 - Yerel Mac Object Capture işi, gerçek ilerleme, iptal, başarısızlık sonrası tekrar deneme, OBJ → GLB dönüşümü, model görüntüleme ve indirme.
 
 Son arama, takip edilen aramalar, bildirim seçimleri ve örnek ilan favorisi bu tarayıcının localStorage alanında saklanır. İlan fotoğrafları ve elle açılan modeller oturum belleğindedir. Yönlendirmeli tarama taslağı bu tarayıcının IndexedDB alanında kullanıcı silene kadar saklanır. “3D model oluştur” ile çekimler yalnızca aynı Mac'teki yerel servise aktarılır; üçüncü taraf bulutuna gönderilmez. Sunucu kopyaları 24 saat sonra, servis çalışırken en fazla bir dakikalık gecikmeyle veya sonraki açılışta silinir.
 
-Gerçek hasar/boya tespiti bağlı değildir. 3D demo ilandaki Jeep'in birebir modeli değildir; kendi çekimlerinden üretilen model demo işaretlerini devralmaz. 64 kare başlangıç eşiğidir; başarılı rekonstrüksiyonu garanti etmez. Aynı gerçek aracın 128 fotoğrafıyla motor → GLB → Chrome görüntüleme testi tamamlandı; yüzey/ölçü doğruluğu ve fiziksel kamera akışı ayrıca doğrulanmalıdır. [Gerçek araç testi](mobile-prototype/qa/real-car-test.md).
+Gerçek hasar/boya tespiti bağlı değildir. 3D demo ilandaki Jeep'in birebir modeli değildir; kendi çekimlerinden üretilen model demo işaretlerini devralmaz. 144 kare çekim hedefidir; başarılı rekonstrüksiyonu garanti etmez. Aynı gerçek aracın 128 fotoğrafıyla motor → GLB → Chrome görüntüleme testi tamamlandı; yüzey/ölçü doğruluğu ve fiziksel kamera akışı ayrıca doğrulanmalıdır. [Gerçek araç testi](mobile-prototype/qa/real-car-test.md).
 
 ## Doğrulama
 
@@ -51,3 +51,7 @@ Yerel fotoğraftan 3D servisi, kurulum ve test sınırları: [Reconstruction REA
 `mobile-prototype/src/listing-data.ts` fiyat, kilometre, donanım ve satıcı açıklaması için kurgusal veri kullanır. Sahibinden veya Arabam.com ile veri entegrasyonu yoktur. Belge sunulmayan hasar/boya/bakım alanları bilinmiyor veya belge bekleniyor olarak görünür.
 
 1.3 T4 150 HP DCT FWD motor bilgileri için [Jeep 2021 Compass kataloğu](https://www.jeep.com.tr/content/dam/jeep/tr/kataloglar/2021/eylul/Compass_MY21_80p_TR_REV_KULAKCIKSIZ_2_.pdf) referans alınmıştır; bu, örnek aracın kimliğini, donanımını veya durumunu doğrulamaz.
+
+## Branch ayrımı
+
+Bu branch (`codex/vehicle-3d-lab`) deneysel 3D görüntüleme, yönlendirmeli çekim, yüksek ayrıntılı yerel geometri ve Gaussian görünüm hattını saklar. Ana geliştirme branch’inde yalnızca fotoğraf yükleme akışı vardır. Kaynak fotoğraf ve üretilen modeller git dışındadır.

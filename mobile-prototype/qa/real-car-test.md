@@ -66,3 +66,18 @@ Tüm üçüncü taraf çekimler, üretilen modeller ve bunların ekran görünt�
 - `quality-comparison.png`: eş boyutta yan görünüm karşılaştırması.
 
 Teknik test: **passed**. Fotogerçekçi yüzey / ekspertiz doğruluğu: **kanıtlanmadı**.
+
+## 29 Ekim kalite hattı ve branch ayrımı
+
+Önceki reduced/medium sonuçları tarihsel karşılaştırmadır. Yeni deneyler ve kod `codex/vehicle-3d-lab` branch’inde saklanır; ana geliştirme fotoğraf yükleme akışıyla devam eder.
+
+- Aynı 128 özgün kareyle full: 100.000 üçgen, 4K atlas, yaklaşık 6,06 MB mobil GLB.
+- Custom (250k poligon / 8K üst sınırı): gerçek çıktı 142.968 üçgen, 4096×4096 atlas, 8.236.312 bayt. GLB SHA-256: `50f71b8c54223e4a80bfe977c6d37f012344b0de1fe0e02a5f5d17de57356ac6`. Daha büyük üst sınır kaynakta olmayan ayrıntıyı üretmedi.
+- Kameralar/iç kalibrasyon/seyrek noktalar yalnızca fotoğraflardan tahmin edildi. Gerçek OBJ’nin her kameraya projeksiyonuyla araç alfa maskeleri üretildi. RGB ve kamera iç parametreleri birlikte ölçeklendi; kaynak JPEG’ler korunuyor.
+- Maskeli Gaussian 4.000 adım: 411 sn, temizlik sonrası 171.023 nokta / 40.362.979 bayt. Aynı modelden 4.000 → 12.000 adım devamı: ek 800 sn, 173.133 nokta / 40.860.939 bayt. Bu bir sıfırdan 12k süre ölçümü değildir.
+- Maskeleme zemin uzantılarını azalttı. Yan kaporta/cam hâlâ yumuşak ve bazı açılarda erimiş görünüyor; sonuç kusursuz veya ekspertiz için yeterli kabul edilmedi. Yoğun mesh kapı/cam sınırlarını daha belirgin koruyor; yansıma bozulması devam ediyor.
+- Mevcut 128 kamerada en büyük çevre boşluğu 17,14°, yükseklik aralığı 27,48°. Çevre kapsamının iyi olması yüzey doğruluğunu kanıtlamaz.
+- Yeni çekim planı normal/yüksek/alçak üç tur × sekiz yön × altı kare = 144; bu yeni planla gerçek araç çekimi henüz yapılmadı. Eski 64 kare taslak korunur, eksik çekimler tamamlanır. Yaklaşık %70+ örtüşme, sabit 1× lens ve dağınık ışık gerekir.
+- 30 Node testi ve üretim derlemesi geçti. Native custom çıktı gerçek motorda, Gaussian ve mesh Chrome’da gerçek Vehicle3D bileşeniyle incelendi. HTTP testleri kontrollü motor kullanır. Fiziksel iOS/Android kamerası ve erimesiz yüzey doğruluğu doğrulanmadı.
+
+Güncel modeller, `custom-result.json`, `masked-result.json`, `masked-refined-result.json` ve ekran kanıtları git dışındaki `.local/real-car-test/` içindedir. Üçüncü taraf fotoğraflar ve modeller branch’e eklenmedi.

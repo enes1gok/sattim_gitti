@@ -18,7 +18,7 @@ export default function Prototype() {
   const { bottomInset } = useKeyboardInsets();
   const [sheet, setSheet] = useState<Sheet>(null);
   const captureSession = useCaptureSession();
-  const [generatedModel, setGeneratedModel] = useState<{ name: string; buffer: ArrayBuffer; reconstructed: boolean }>();
+  const [generatedModel, setGeneratedModel] = useState<import("./Vehicle3D").VehicleModelSource>();
   const [view, setView] = useState<"perspective" | "top">("perspective");
   const [part, setPart] = useState<Part>("door");
   const [findingFromModel, setFindingFromModel] = useState(false);
@@ -193,7 +193,7 @@ export default function Prototype() {
       <input ref={fileInput} className="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple tabIndex={-1} aria-label="Araç fotoğraflarını seç" onChange={addPhotos} disabled={reading} />
       <BottomSheet open={sheet !== null} onOpenChange={(open) => { if (!open) setSheet(null); }} title={sheet ? titles[sheet] : ""} description={sheet === "capture" ? "Kendi aracından gerçek bir 3D model." : sheet === "photos" ? "Aracın farklı açılarını ekle." : sheet === "finding" ? "Örnek araç üzerindeki parça bilgisi." : sheet === "model" ? "Döndür, yakınlaş, parçaları keşfet." : "Fotoğraflarınla ilk adımı at."} snap={sheet === "capture" || sheet === "model" ? 0.92 : sheet === "photos" ? 0.82 : 0.73}>
         <button className="sheet-close icon-button" aria-label="Paneli kapat" onClick={() => setSheet(null)}><XIcon size={20} /></button>
-        {sheet === "capture" && <CaptureFlow session={captureSession} onModel={(buffer) => { setGeneratedModel({ name: "Aracının 3D modeli", buffer, reconstructed: true }); setSheet("model"); }} />}
+        {sheet === "capture" && <CaptureFlow session={captureSession} onModel={(model) => { setGeneratedModel({ name: "Aracının 3D modeli", ...model, reconstructed: true }); setSheet("model"); }} />}
         {sheet === "model" && <Suspense fallback={<div className="model-loading" role="status">3D görüntüleyici açılıyor…</div>}><Vehicle3D initialModel={generatedModel} onPartSelect={(selected) => openFinding(selected, true)} /></Suspense>}
         {sheet === "finding" && <div className="detail-content">
           <span className={`status-label ${part === "hood" ? "neutral" : ""}`}>{part === "door" ? "Olası çizik" : "İncelenmedi"}</span>
@@ -207,7 +207,7 @@ export default function Prototype() {
           {photos.length ? <div className="photo-grid">{photos.map((photo) => <figure key={photo.id}><img src={photo.url} alt={`Eklenen fotoğraf: ${photo.name}`} /><button className="remove-photo" aria-label={`${photo.name} fotoğrafını kaldır`} disabled={reading} onClick={() => removePhoto(photo)}><TrashIcon size={17} /></button><figcaption>Analiz bekliyor</figcaption></figure>)}</div> : <button className="upload-target" onClick={() => fileInput.current?.click()} disabled={reading}><ImagesIcon size={38} weight="light" /><strong>Fotoğraflarını seç</strong><span>JPG, PNG, WebP · En fazla 8 fotoğraf</span></button>}
           {error && <p className="upload-error" role="alert">{error}</p>}
           <p className="upload-status" role="status">{reading ? "Fotoğraflar açılıyor…" : photos.length ? `${photos.length} / 8 fotoğraf · Bu oturumda cihazında tutulur.` : "Fotoğraflar sunucuya gönderilmez."}</p>
-          <div className="source-note"><InfoIcon size={20} /><p>Bu fotoğraflar hasar analizi üretmez. 3D model için yönlendirmeli taramadaki iki çekim turunu tamamla.</p></div>
+          <div className="source-note"><InfoIcon size={20} /><p>Bu fotoğraflar hasar analizi üretmez. 3D model için yönlendirmeli taramadaki üç çekim turunu tamamla.</p></div>
           <button className="secondary-button" onClick={() => setSheet("capture")}><CubeIcon size={22} />3D araç taramasına geç</button>
           <button className="primary-button" disabled={reading || photos.length >= PHOTO_LIMIT} onClick={() => fileInput.current?.click()}><CameraIcon size={22} />{reading ? "Açılıyor…" : photos.length ? "Başka fotoğraf ekle" : "Galeriden seç"}</button>
           {photos.length > 0 && <button className="secondary-button" onClick={() => setSheet(null)}><CheckCircleIcon size={20} />Araca dön</button>}

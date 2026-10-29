@@ -1,8 +1,9 @@
 import type { CaptureDescriptor } from "./capture-policy";
+import { validateAppearanceFile, validateAppearanceBounds, type AppearanceBounds, type AppearanceModel } from "./appearance-file";
 
 export const RECONSTRUCTION_URL = "http://127.0.0.1:4180";
-export type ReconstructionJob = { id: string; status: "processing" | "converting" | "ready" | "failed"; progress: number; message: string; warnings: number };
-export type ServiceStatus = { available: boolean; message: string };
+export type ReconstructionJob = { id: string; status: "processing" | "converting" | "ready" | "failed"; progress: number; message: string; warnings: number; appearanceStatus?: "processing" | "ready" | "failed"; appearanceMessage?: string; appearanceBounds?: AppearanceBounds };
+export type ServiceStatus = { available: boolean; appearanceAvailable?: boolean; message: string };
 
 async function responseJson(response: Response) {
   const body = await response.json();
@@ -39,4 +40,16 @@ export async function loadReconstruction(id: string): Promise<ArrayBuffer> {
   const response = await fetch(`${RECONSTRUCTION_URL}/jobs/${encodeURIComponent(id)}/model`, { signal: AbortSignal.timeout(60000) });
   if (!response.ok) throw new Error("3D model açılamadı. Yeniden dene.");
   return response.arrayBuffer();
+}
+
+export async function startAppearance(id: string): Promise<ReconstructionJob> {
+  return fetch(`${RECONSTRUCTION_URL}/jobs/${encodeURIComponent(id)}/appearance`, { method: "POST", signal: AbortSignal.timeout(15000) }).then(responseJson);
+}
+
+export async function loadAppearance(job: ReconstructionJob): Promise<AppearanceModel> {
+  validateAppearanceBounds(job.appearanceBounds);
+  const response = await fetch(`${RECONSTRUCTION_URL}/jobs/${encodeURIComponent(job.id)}/appearance`, { signal: AbortSignal.timeout(60000) });
+  if (!response.ok) throw new Error("Gerçekçi görünüm açılamadı. Yeniden dene.");
+  const buffer = await response.arrayBuffer(); validateAppearanceFile(buffer);
+  return { buffer, bounds: job.appearanceBounds };
 }

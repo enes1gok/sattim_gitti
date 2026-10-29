@@ -1,14 +1,30 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ArrowClockwiseIcon, ArrowCounterClockwiseIcon, ArrowUUpLeftIcon, CarSimpleIcon, CubeIcon, MinusIcon, PlusIcon, UploadSimpleIcon } from "@phosphor-icons/react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { validateModelFile } from "./model-file";
+import type { AppearanceModel } from "./appearance-file";
 
-type Source = { name: string; buffer?: ArrayBuffer; reconstructed?: boolean };
+export type VehicleModelSource = { name: string; buffer?: ArrayBuffer; reconstructed?: boolean; appearance?: AppearanceModel };
+type Source = VehicleModelSource;
 type Commands = { rotate: (direction: number) => void; zoom: (factor: number) => void; reset: () => void; top: () => void };
-type Props = { onPartSelect: (part: "door" | "hood") => void; initialModel?: Source };
+type Props = { onPartSelect: (part: "door" | "hood") => void; initialModel?: Source; embedded?: boolean };
 const DEMO: Source = { name: "Genel SUV demosu" };
+const VehicleAppearance = lazy(() => import("./VehicleAppearance"));
+
+export default function Vehicle3D(props: Props) {
+  const [mode, setMode] = useState<"appearance" | "mesh">("appearance");
+  const appearance = props.initialModel?.appearance;
+  if (!appearance) return <MeshVehicle3D {...props} />;
+  return <>
+    <div className="scan-pass-switch" role="group" aria-label="Araç görünümü">
+      <button className={mode === "appearance" ? "active" : ""} aria-pressed={mode === "appearance"} onClick={() => setMode("appearance")}>Gerçekçi görünüm</button>
+      <button className={mode === "mesh" ? "active" : ""} aria-pressed={mode === "mesh"} onClick={() => setMode("mesh")}>3D geometri</button>
+    </div>
+    {mode === "appearance" ? <Suspense fallback={<p role="status">Gerçekçi görünüm açılıyor…</p>}><VehicleAppearance model={appearance} name={props.initialModel!.name} onFallback={() => setMode("mesh")} /></Suspense> : <MeshVehicle3D {...props} embedded />}
+  </>;
+}
 
 function disposeObject(root: THREE.Object3D) {
   const geometries = new Set<THREE.BufferGeometry>();
@@ -31,7 +47,7 @@ function disposeObject(root: THREE.Object3D) {
   });
 }
 
-export default function Vehicle3D({ onPartSelect, initialModel }: Props) {
+function MeshVehicle3D({ onPartSelect, initialModel, embedded }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const hotspots = useRef<{ door: HTMLButtonElement | null; hood: HTMLButtonElement | null }>({ door: null, hood: null });
@@ -145,8 +161,11 @@ export default function Vehicle3D({ onPartSelect, initialModel }: Props) {
         if (!buffer) throw new Error("Model verisi okunamadı.");
         validateModelFile(buffer);
         const manager = new THREE.LoadingManager();
+        let textureFailed = false;
+        manager.onError = () => { textureFailed = true; };
         manager.setURLModifier((url) => { if (!url.startsWith("data:") && !url.startsWith("blob:")) throw new Error("Model tek dosya olmalı."); return url; });
         const gltf = await new GLTFLoader(manager).parseAsync(buffer, "");
+        if (textureFailed) { disposeObject(gltf.scene); throw new Error("Modelin dokusu açılamadı. Modeli JPG/PNG dokularla yeniden dışa aktar."); }
         if (disposed) { disposeObject(gltf.scene); return; }
         model = gltf.scene;
         const bounds = new THREE.Box3().setFromObject(model);
@@ -158,7 +177,19 @@ export default function Vehicle3D({ onPartSelect, initialModel }: Props) {
         model.scale.setScalar(scale);
         model.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
         modelHeight = size.y * scale;
-        model.traverse((object) => { if (object instanceof THREE.Mesh) { object.castShadow = true; object.receiveShadow = true; } });
+        model.traverse((object) => {
+          if (!(object instanceof THREE.Mesh)) return;
+          object.castShadow = true;
+          object.receiveShadow = true;
+          for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+            // Photogrammetry's unlit texture already contains the photographed lighting.
+            // Preserve those sRGB colours instead of applying a second filmic look.
+            if (source.buffer && material instanceof THREE.MeshBasicMaterial) material.toneMapped = false;
+            for (const value of Object.values(material)) {
+              if (value instanceof THREE.Texture) value.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+            }
+          }
+        });
         scene.add(model);
         model.updateMatrixWorld(true);
         reset();
@@ -223,9 +254,9 @@ export default function Vehicle3D({ onPartSelect, initialModel }: Props) {
       <button disabled={!ready} aria-label="3D görünümünü sıfırla" onClick={() => commands.current?.reset()}><ArrowUUpLeftIcon size={22} /></button>
     </div>
     {error && <p className="upload-error" role="alert">{error}</p>}
-    <button className="secondary-button model-import" onClick={() => fileInput.current?.click()} disabled={reading || phase === "loading"}><UploadSimpleIcon size={20} />{reading ? "Model okunuyor…" : "Kendi GLB modelini aç"}</button>
+    {!embedded && <button className="secondary-button model-import" onClick={() => fileInput.current?.click()} disabled={reading || phase === "loading"}><UploadSimpleIcon size={20} />{reading ? "Model okunuyor…" : "Kendi GLB modelini aç"}</button>}
     <input className="file-input" ref={fileInput} type="file" accept=".glb" tabIndex={-1} aria-label="GLB modeli seç" onChange={importModel} />
-    <p className="model-file-note">GLB 2.0 · En fazla 20 MB · Dosyan cihazında açılır.</p>
-    {source.buffer && <button className="model-demo-return" onClick={() => { setError(""); setSource(DEMO); }}>Örnek modele dön</button>}
+    {!embedded && <p className="model-file-note">GLB 2.0 · En fazla 20 MB · Dosyan cihazında açılır.</p>}
+    {source.buffer && !embedded && <button className="model-demo-return" onClick={() => { setError(""); setSource(DEMO); }}>Örnek modele dön</button>}
   </div>;
 }

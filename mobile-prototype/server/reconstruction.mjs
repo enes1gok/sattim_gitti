@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { createWriteStream } from "node:fs";
-import { mkdir, readFile, writeFile, readdir, rm } from "node:fs/promises";
-import { resolve, join } from "node:path";
+import { mkdir, readFile, writeFile, readdir, rm, rename, link, chmod } from "node:fs/promises";
+import { resolve, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID, createHash } from "node:crypto";
 import { spawn } from "node:child_process";
@@ -9,7 +9,9 @@ import { pipeline } from "node:stream/promises";
 import { createInterface } from "node:readline";
 import Busboy from "busboy";
 import sharp from "sharp";
-import obj2gltf from "obj2gltf";
+import { convertMobileModel } from "./mobile-model.mjs";
+import { appearanceEngine } from "./appearance.mjs";
+import { validateAppearanceFile, validateAppearanceBounds } from "../src/appearance-file.ts";
 import { validateCapture, MAX_SCAN_BYTES, MAX_PHOTO_BYTES, MAX_CAPTURE_PHOTOS } from "../src/capture-policy.ts";
 import { validateModelFile } from "../src/model-file.ts";
 
@@ -17,7 +19,7 @@ const project = fileURLToPath(new URL("../", import.meta.url));
 const lifetime = 24 * 60 * 60 * 1000;
 const validId = (value) => /^[a-f0-9-]{36}$/.test(value);
 const failure = (message, status = 400) => Object.assign(new Error(message), { status });
-const publicJob = ({ id, status, progress, message, warnings }) => ({ id, status, progress, message, warnings });
+const publicJob = ({ id, status, progress, message, warnings, appearanceStatus, appearanceMessage, appearanceBounds }) => ({ id, status, progress, message, warnings, appearanceStatus, appearanceMessage, appearanceBounds });
 
 export async function nativeEngine(binary) {
   const available = await new Promise((resolve) => {
@@ -40,14 +42,15 @@ export async function nativeEngine(binary) {
           } catch { /* Ignore native diagnostic lines; only JSON events belong to the API. */ }
         });
         child.on("error", reject);
-        child.on("close", (code) => code === 0 ? resolve() : reject(new Error(error)));
+        child.on("close", (code, signal) => code === 0 ? resolve() : reject(new Error(signal ? "İşlem kesildi veya süre sınırına ulaştı. Çekimlerin korundu; yeniden deneyebilirsin." : error)));
       });
     },
   };
 }
 
-export async function reconstructionServer({ root = join(project, ".local/reconstructions"), origin = "http://127.0.0.1:4173", engine } = {}) {
+export async function reconstructionServer({ root = join(project, ".local/reconstructions"), origin = "http://127.0.0.1:4173", engine, appearanceWorker } = {}) {
   const worker = engine ?? await nativeEngine(join(project, ".local/bin/reconstruct"));
+  const appearance = appearanceWorker ?? await appearanceEngine(join(project, ".local/tools/brush/brush-app-aarch64-apple-darwin/brush_app"), join(project, ".local/bin/render-masks"));
   await mkdir(root, { recursive: true, mode: 0o700 });
   const jobs = new Map();
   let accepting = false;
@@ -57,6 +60,7 @@ export async function reconstructionServer({ root = join(project, ".local/recons
       const stored = JSON.parse(await readFile(join(root, id, "job.json"), "utf8"));
       if (Date.now() - stored.created > lifetime) { await rm(join(root, id), { recursive: true, force: true }); continue; }
       if (stored.status !== "ready" && stored.status !== "failed") Object.assign(stored, { status: "failed", message: "Servis yeniden başladı. Çekimlerinle yeniden deneyebilirsin." });
+      if (stored.appearanceStatus === "processing") Object.assign(stored, { appearanceStatus: "failed", appearanceMessage: "Servis yeniden başladı. Geometrin korundu; gerçekçi görünümü yeniden hazırlayabilirsin." });
       jobs.set(id, { ...stored, abort: new AbortController() });
     } catch { await rm(join(root, id), { recursive: true, force: true }); }
   }
@@ -79,16 +83,29 @@ export async function reconstructionServer({ root = join(project, ".local/recons
       job.status = "converting";
       job.message = "Mobil 3D model hazırlanıyor.";
       job.progress = 95;
-      const outputFiles = await readdir(join(directory, "output"));
-      const obj = outputFiles.find((name) => name.endsWith(".obj"));
-      if (!obj) throw new Error("Üretilen model dosyası bulunamadı. Yeniden çekim gerekebilir.");
-      const glb = await obj2gltf(join(directory, "output", obj), { binary: true, secure: true, unlit: true });
+      const glb = await convertMobileModel(join(directory, "output"));
       job.abort.signal.throwIfAborted();
       validateModelFile(Uint8Array.from(glb).buffer);
       await writeFile(join(directory, "model.glb"), glb, { mode: 0o600 });
       Object.assign(job, { status: "ready", progress: 100, message: "3D modelin hazır. Eksik yüzeyleri orijinal fotoğraflarla kontrol et." });
     } catch (error) {
       if (!job.abort.signal.aborted) Object.assign(job, { status: "failed", message: error.message || "Model üretilemedi. Çekimlerin korundu." });
+    } finally {
+      if (job.abort.signal.aborted) await rm(directory, { recursive: true, force: true });
+      else await persist(job);
+    }
+  }
+
+  async function processAppearance(job) {
+    const directory = join(root, job.id);
+    try {
+      const { model, bounds } = await appearance.run(join(directory, "input"), join(directory, "output"), directory, job.abort.signal);
+      job.abort.signal.throwIfAborted();
+      validateAppearanceFile(Uint8Array.from(model).buffer); validateAppearanceBounds(bounds);
+      await writeFile(join(directory, "appearance.ply"), model, { mode: 0o600 });
+      Object.assign(job, { appearanceStatus: "ready", appearanceBounds: bounds, appearanceMessage: "Gerçekçi görünümün hazır. Yansımaları ve eksik yüzeyleri fotoğraflarınla kontrol et." });
+    } catch {
+      if (!job.abort.signal.aborted) Object.assign(job, { appearanceStatus: "failed", appearanceMessage: "Gerçekçi görünüm hazırlanamadı. 3D geometrin ve çekimlerin korundu." });
     } finally {
       if (job.abort.signal.aborted) await rm(directory, { recursive: true, force: true });
       else await persist(job);
@@ -108,10 +125,10 @@ export async function reconstructionServer({ root = join(project, ".local/recons
     }
     const pathname = new URL(request.url, "http://127.0.0.1").pathname;
     try {
-      if (request.method === "GET" && pathname === "/health") return json(200, { available: worker.available, message: worker.available ? "Yerel model üretimi hazır." : "Bu bilgisayarda model üretimi kullanılamıyor. Çekimlerini yine de hazırlayabilirsin." });
+      if (request.method === "GET" && pathname === "/health") return json(200, { available: worker.available, appearanceAvailable: appearance.available, message: worker.available ? "Yerel model üretimi hazır." : "Bu bilgisayarda model üretimi kullanılamıyor. Çekimlerini yine de hazırlayabilirsin." });
       if (request.method === "POST" && pathname === "/jobs") {
         if (!worker.available) throw failure("Model üretim servisi bu bilgisayarda kullanılamıyor.", 503);
-        if (accepting || [...jobs.values()].some((job) => ["processing", "converting"].includes(job.status))) throw failure("Başka bir tarama işleniyor. Tamamlanınca yeniden dene.", 409);
+        if (accepting || [...jobs.values()].some((job) => ["processing", "converting"].includes(job.status) || job.appearanceStatus === "processing")) throw failure("Başka bir tarama işleniyor. Tamamlanınca yeniden dene.", 409);
         if (jobs.size >= 5) throw failure("Yerel tarama alanı dolu. Önce eski bir taramayı sil.", 409);
         if (Number(request.headers["content-length"] || 0) > MAX_SCAN_BYTES) throw failure("Çekim en fazla 512 MB olabilir.", 413);
         accepting = true;
@@ -123,6 +140,7 @@ export async function reconstructionServer({ root = join(project, ".local/recons
         const files = new Map();
         const writes = [];
         try {
+          await mkdir(join(directory, "originals"), { mode: 0o700 });
           const parser = Busboy({ headers: request.headers, limits: { fileSize: MAX_PHOTO_BYTES, files: MAX_CAPTURE_PHOTOS, fields: 1, fieldSize: 32000, parts: MAX_CAPTURE_PHOTOS + 1 } });
           let bytes = 0;
           const countBytes = (chunk) => { bytes += chunk.length; if (bytes > MAX_SCAN_BYTES) { uploadError = failure("Çekim en fazla 512 MB olabilir.", 413); request.destroy(); } };
@@ -154,9 +172,15 @@ export async function reconstructionServer({ root = join(project, ".local/recons
             hashes.add(hash);
             const metadata = await sharp(file, { limitInputPixels: 80_000_000 }).metadata();
             if (!["jpeg", "png"].includes(metadata.format) || Math.min(metadata.width || 0, metadata.height || 0) < 900 || Math.max(metadata.width || 0, metadata.height || 0) < 1600) throw failure("Fotoğraflar en az 1600 × 900 piksel olmalı.");
-            // Preserve the user's capture order for sequential photogrammetry.
-            await writeFile(join(directory, "input", `${String(capture.indexOf(photo)).padStart(4, "0")}.${metadata.format === "png" ? "png" : "jpg"}`), file, { mode: 0o600 });
-            await rm(files.get(photo.id));
+            // Keep originals byte-for-byte; normalize phone EXIF orientation before
+            // estimating poses so masks and training pixels share one coordinate frame.
+            const original = join(directory, "originals", basename(files.get(photo.id)));
+            await rename(files.get(photo.id), original);
+            const target = join(directory, "input", `${String(capture.indexOf(photo)).padStart(4, "0")}.${metadata.format === "png" ? "png" : "jpg"}`);
+            if (metadata.orientation && metadata.orientation !== 1) {
+              await sharp(original, { limitInputPixels: 80_000_000 }).rotate().withMetadata({ orientation: 1 }).toFormat(metadata.format === "png" ? "png" : "jpeg", metadata.format === "png" ? {} : { quality: 98, chromaSubsampling: "4:4:4" }).toFile(target);
+              await chmod(target, 0o600);
+            } else await link(original, target);
           }
           const job = { id, created: Date.now(), status: "processing", progress: 0, message: "Fotoğraflar eşleştiriliyor, geometri oluşturuluyor.", warnings: 0, abort: new AbortController() };
           await persist(job);
@@ -169,7 +193,7 @@ export async function reconstructionServer({ root = join(project, ".local/recons
           throw error;
         } finally { accepting = false; }
       }
-      const match = /^\/jobs\/([a-f0-9-]{36})(\/model)?$/.exec(pathname);
+      const match = /^\/jobs\/([a-f0-9-]{36})(\/model|\/appearance)?$/.exec(pathname);
       const job = match && jobs.get(match[1]);
       if (!job) throw failure("Tarama bulunamadı veya süresi doldu. Çekimlerinle yeniden başlayabilirsin.", 404);
       if (Date.now() - job.created > lifetime) {
@@ -178,14 +202,30 @@ export async function reconstructionServer({ root = join(project, ".local/recons
         throw failure("Taramanın 24 saatlik saklama süresi doldu.", 410);
       }
       if (request.method === "GET" && !match[2]) return json(200, publicJob(job));
-      if (request.method === "GET" && match[2]) {
+      if (request.method === "POST" && match[2] === "/appearance") {
+        if (!appearance.available) throw failure("Gerçekçi görünüm işleyicisi bu Mac’te kullanılamıyor.", 503);
+        if (job.status !== "ready") throw failure("Önce 3D geometrinin tamamlanması gerekli.", 409);
+        if (accepting || [...jobs.values()].some((item) => ["processing", "converting"].includes(item.status) || item.appearanceStatus === "processing")) throw failure("Başka bir tarama işleniyor. Tamamlanınca yeniden dene.", 409);
+        if (job.appearanceStatus === "ready") return json(200, publicJob(job));
+        Object.assign(job, { appearanceStatus: "processing", appearanceMessage: "Fotoğraflarından gerçekçi görünüm öğreniliyor. Bu işlem geometri üretiminden daha uzun sürebilir." });
+        await persist(job);
+        void processAppearance(job).catch(() => { job.appearanceStatus = "failed"; job.appearanceMessage = "İşlem kaydedilemedi. Geometrin korundu."; });
+        return json(202, publicJob(job));
+      }
+      if (request.method === "GET" && match[2] === "/appearance") {
+        if (job.appearanceStatus !== "ready") throw failure("Gerçekçi görünüm henüz hazır değil.", 409);
+        const buffer = await readFile(join(root, job.id, "appearance.ply"));
+        response.writeHead(200, { "Content-Type": "application/octet-stream", "Content-Length": buffer.length, "Cache-Control": "no-store" });
+        return response.end(buffer);
+      }
+      if (request.method === "GET" && match[2] === "/model") {
         if (job.status !== "ready") throw failure("Model henüz hazır değil.", 409);
         const buffer = await readFile(join(root, job.id, "model.glb"));
         response.writeHead(200, { "Content-Type": "model/gltf-binary", "Content-Length": buffer.length, "Cache-Control": "no-store" });
         return response.end(buffer);
       }
       if (request.method === "DELETE" && !match[2]) {
-        const running = ["processing", "converting"].includes(job.status);
+        const running = ["processing", "converting"].includes(job.status) || job.appearanceStatus === "processing";
         job.abort.abort(); jobs.delete(job.id);
         if (!running) await rm(join(root, job.id), { recursive: true, force: true });
         return json(200, { removed: true });
