@@ -1,6 +1,6 @@
 # Design QA — Sattım Gitti
 
-Current revision: search-first marketplace UI (29 October 2026), documented below. Earlier prototype/listing/3D findings are comparison history; their limitations describe those earlier revisions.
+Current revision: need-led discovery, decision support and tracking (29 October 2026), documented below. Earlier prototype/listing/3D findings are comparison history; their limitations describe those earlier revisions.
 
 Source visual truth: `qa/design-reference.png`, selected option 1, original 853 × 1844 pixels.
 Implementation: `qa/iphone-final.png`, 393 × 852 pixels. Browser viewport 1400 × 1200, device screen verified at 393 × 852 CSS pixels, density 1. Android evidence: `qa/android-final.png`, 427 × 952 CSS/pixel dimensions, density 1.
@@ -243,7 +243,66 @@ Implementation checklist: preserve runtime [x]; guided capture and recovery [x];
 
 Implementation checklist: search-first home [x]; draft bottom-sheet filters [x]; four tabs and local recovery [x]; persistent selling entry [x]; preserved listing/3D/capture flows [x]; keyboard and both device presets [x]; final visual comparison and build [x].
 
+## Need-led discovery and decision support — 29 October 2026
+
+Source: the user's written direction in this chat, retaining the prior approved white marketplace visual system (`qa/marketplace-home-iphone.png`). The request describes behavior rather than a pixel-accurate mock, so the new screens are an extension rather than a 1:1 recreation.
+
+Evidence: `qa/needs-home-iphone.png`, `qa/needs-compare-iphone.png`, `qa/needs-cost-iphone.png`, `qa/needs-price-iphone.png`, `qa/needs-keyboard-iphone.png` at 393 × 852 pixels, and `qa/needs-results-android.png`, `qa/needs-tracking-android.png`, `qa/needs-keyboard-android.png` at 427 × 952. Browser viewport was 1400 × 1200 at density 1; phone dimensions and zero outer scroll were verified. `qa/needs-comparison.png` combines the prior home with the new home, comparison, and Android tracking view. The Android panel is proportionally fitted into 393 × 852, with no distortion. `qa/needs-focused.png` compares the previous and current home shortcut region. Different saved-search states and added sections are intentional. `qa/needs-preview.png` is a 900 × 633 delivery montage.
+
+Findings and fixes:
+
+- [P1, fixed] The decision sheet initially extended above the device screen when the keyboard opened. The app-owned sheet now caps its height to the available space below the device's safe top, without modifying the protected runtime. Final iPhone and Android keyboard captures show the title and tabs inside the screen.
+- [P1, fixed] A portal click while an input was focused was interpreted as an outside click after a tab transition. The app-level pointer guard now applies only to DOM descendants; the portalled decision sheet handles its own pointer focus. After entering a cost and selecting Fiyat bilgisi, both device previews retained the panel and hid the keyboard; the test was repeated after final source organization.
+- [P2, fixed] Followed need cards repeated their category as both title and description. They now show the category as title and its criteria beneath it; the saved search retains additional filters and query text.
+- No actionable P0/P1/P2 visual issues remained in the inspected states. The price card and listing below the viewport remain reachable by scrolling. The visible pointer circles in screenshots are the existing preview cursor.
+
+Fidelity surfaces: bundled Inter and the existing text hierarchy remain; rounded white/gray surfaces and black primary action preserve the prior design system; the three equal shortcuts now describe user needs; the comparison uses a readable native table and existing icon family; no new raster asset or device chrome was fabricated. Copy distinguishes fictional comparison data from a real Jeep specification and explains missing market and price-history evidence. Live notifications are not represented as active. The user's choice was fuel + maintenance; taxes and insurance are explicitly excluded from the displayed estimate.
+
+Verification: family criteria match both seats and luggage; a large-baggage query returns no match for the example values and removing its chip restores the example listing; the low-cost shortcut shows its assumptions. Following the family query and reloading preserved its need criteria. Price information → favorite → Takip showed the saved search and example price in the same area; test favorites and followed searches were removed afterwards. Comparison's difference-only toggle hides equal rows. Entering 1,200 km, 48 ₺/L and 900 ₺ maintenance produced 5,220 ₺; empty input produced an error rather than zero. Price history and market comparison show missing-data states. Keyboard focus, switching decision tabs, and closing the panel were exercised on iPhone and Pixel. The existing 3D and capture flows remain in place.
+
+Final `npm run build` passed TypeScript, Vite and the integrity check for 28 protected runtime files. `npm run test:decision` passed four tests covering boundaries, missing/nonfinite data and monthly cost calculations. The developer server logged a transient stale-module HMR error while the new component was moved into the app-owned UI file; a fresh preview tab subsequently reported no console warnings or errors. Vite's existing bundle-size warning remains. Real listing data, market prices, price history, alert delivery and native-app validation remain outside this browser prototype.
+
 final result: passed
+
+
+## Contextual notification preview — 29 October 2026
+
+Source: `qa/notification-writing-reference.png`, the user's written example of a useful vehicle-match notification. This defines message content rather than a dark app theme. The approved white marketplace treatment is retained.
+
+- `src/search-data.ts` shares the existing result matcher with the message builder. A preview includes the example listing's model, year, transmission and mileage, budget headroom only when a finite budget is selected, and the matching search criteria. A failed criterion produces no message. Budget headroom is distinct from a historical price decrease.
+- Takip and notification preferences show the same explicitly labelled preview. Without followed searches, a clearly labelled sample search supplies the demonstration. A saved search replaces that scenario; no matching saved search produces an empty state. The preview does not imply a new listing or a sent notification. Notification preferences remain off unless selected; live delivery remains unconnected.
+- iPhone and Pixel were inspected in the in-app browser. Evidence: `qa/notification-preview-iphone.png`, `qa/notification-preview-android.png`, `qa/notification-settings-android.png`. These include the surrounding browser/device preview and are not native-resolution phone exports. Text and actions remain within the device and the longer preferences panel scrolls to Tamam.
+- Following the family search changed the message to its saved criteria and removed the budget sentence when no budget existed. Opening the example listing from preferences and returning initially reopened preferences; the preview action now closes its panel before navigation. The corrected transition was repeated successfully. The temporary followed search was removed after verification.
+- Validation: production build and the integrity check for 28 protected runtime files passed; four notification tests, four existing search-recovery browser tests, and four decision-data tests passed. The browser tests used installed Google Chrome via a temporary config because Playwright's bundled headless browser was absent; no project runtime/config was changed for that workaround. The existing Vite bundle-size warning remains.
+- CodeGraph was initialized with the user's explicit approval and synced after the changes. No deployment or real notification delivery was performed.
+
+
+## Home promise refinement — 29 October 2026
+
+The user rejected the initial promise composition as visually weak. This is a scoped refinement of the existing white marketplace, not a recreation of a new mockup. Visual grounding: `qa/design-reference.png` (approved white/black design language) and `qa/home-refinement-before-android.png` (the rejected home composition).
+
+Evidence: `qa/home-refinement-android.png`, `qa/home-refinement-iphone.png`, and the combined before/after inspection `qa/home-refinement-comparison.png`. Captures include the phone stage at the same 847 × 797 browser viewport; these are scaled in-app previews, not native-resolution phone exports or pixel-fidelity claims. Before/after Android states use the same saved family search, keyboard closed, and top scroll position.
+
+- [P2, fixed] The three-line slogan, long supporting copy, and vertically stacked full-width actions crowded the first screen. The headline now uses a 38px lead and 23px supporting line, short copy, and a grouped search surface with side-by-side actions. All three need cards fit above navigation on both inspected devices; Android also reveals the listing image.
+- [P2, fixed] Need icons and labels previously appeared as separate visual fragments. Each is now a complete bordered 90px card with an existing Phosphor icon and its label.
+- Final polish increased input/action/card text sizes and the prototype note after the first comparison. Existing Inter, black primary action, white/gray surfaces and 12–20px control radii remain. No new image assets were needed; the existing example SUV image is unchanged. Copy retains the full tracking promise and explicitly states that live tracking is disconnected.
+- Interaction checks in the in-app browser: open filters, choose the 1 million budget, submit, inspect the real budget-gap explanation, apply recovery and see the example listing; open and return from listing; type Jeep on iPhone and submit with Enter, verifying that the keyboard closes and results appear. The original family search without query/budget was restored afterward. No search-follow or notification preference was enabled.
+- The five fidelity surfaces were reviewed: typography and wrapping, vertical rhythm and alignment, palette/contrast, unchanged source imagery, and concise/accurate copy. The combined full views show the composition change; focused inspection checked the search controls and need-card labels. This is visual refinement QA at the user's current preview scale. No actionable P0/P1/P2 finding remains in these inspected states.
+- Production build, TypeScript and the 28-file protected mobile runtime integrity check passed. The existing bundle-size warning remains. No deployment occurred.
+
+final result: passed
+
+## Listing-to-handover guidance — 29 October 2026
+
+The requested end-to-end process now has nine stages: conversation, appointment, expertise, offer, traffic insurance, MTV/debt checks, safe payment preparation, notary and handover/aftercare. The approved white/black marketplace, device chrome, four tabs, 3D and capture entry points remain. The route opens from the listing, Keşfet, Takip and Araç sat; the seller entry selects the seller role. All vehicle identity and progress remain explicitly an example.
+
+Buyer and seller drafts/checklists persist independently in localStorage. Message and expertise notes, appointment plans and offer drafts use keyboard-aware controls with explicit save actions. Date/time validation rejects impossible dates. Saving a draft never implies delivery, booking, counterparty acceptance or institutional verification. The next step and progress are derived from checklist state. Notary confirmation requires the user's policy, debt, payment and document checks; handover requires notary. Undoing a prerequisite cascades, and a changed offer reopens old payment/notary/handover confirmations.
+
+Insurance, MTV and safe-payment guidance includes primary-source links (TSB, GİB, Ticaret Bakanlığı). The MTV action opens the official Digital Tax Office. No balances, premiums, fees or successful official transactions are invented. Real chat, scheduling, insurance, banking and notary integrations remain disconnected.
+
+Visual QA in the in-app browser: iPhone and Pixel 10 overview, next-step scroll action, expanded conversation form and notary prerequisites. The overview was tightened so the primary next-step action fits above navigation on both devices. Evidence: `qa/sales-journey-iphone.png`, `qa/sales-journey-android.png`, `qa/sales-journey-notary-android.png`. These are scaled previews with surrounding browser context.
+
+Validation: production build, TypeScript, integrity check for all 28 protected runtime files, four decision-data tests and all five new sales-journey tests passed. Browser tests used installed Google Chrome through ignored `.local/journey-playwright.config.ts`, because the bundled Playwright browser is absent. The full browser suite passed 20 of 21 checks. The remaining pre-existing BottomSheet exit test clicks the overlay at (8,8), where Chrome reports the document intercepting the pointer; it runs on the separate runtime fixture, which imports only protected runtime files and does not load the app or its CSS. No protected runtime file was changed. The existing Vite bundle-size warning remains. No deployment occurred.
 
 
 ## 29 Ekim — fotoğraf akışını ana branch’te tutma

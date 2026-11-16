@@ -3,17 +3,18 @@ import { MobileDeviceProvider, useMobileDevice } from "./Device";
 import { KeyboardDock, KeyboardProvider, useKeyboard } from "./Keyboard";
 import { PhoneFrame } from "./PhoneFrame";
 import { HomeIndicator, StatusBar } from "./components";
+import { isNativeAndroid } from "./native";
 
 export function MobileRuntime({ children }: PropsWithChildren) {
   return (
     <MobileDeviceProvider>
       <PhoneFrame>
         <KeyboardProvider>
-          <KeyboardPreview />
-          <StatusBar />
+          {!isNativeAndroid && <KeyboardPreview />}
+          {!isNativeAndroid && <StatusBar />}
           <MobileAppViewport>{children}</MobileAppViewport>
-          <HomeIndicator />
-          <KeyboardDock />
+          {!isNativeAndroid && <HomeIndicator />}
+          {!isNativeAndroid && <KeyboardDock />}
         </KeyboardProvider>
       </PhoneFrame>
     </MobileDeviceProvider>
