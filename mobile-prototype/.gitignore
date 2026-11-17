@@ -6,3 +6,6 @@ playwright-report/
 qa/invalid-photo.png
 qa/unsupported.txt
 qa/oversize.png
+
+.env.local
+.env.*.local

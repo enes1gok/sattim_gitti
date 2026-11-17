@@ -70,7 +70,7 @@ test("a saved first pass opens in the app with the reconstruction service offlin
       transaction.onerror = () => reject(transaction.error);
     });
   });
-  await page.goto("/");
+  await page.goto("/?demo=1");
   await page.getByRole("button", { name: "Araç sat", exact: true }).click();
   await page.getByRole("button", { name: "Kendi fotoğraf turumu aç" }).click();
   await expect(page.getByRole("heading", { name: "HD 360° fotoğraf turu" })).toBeVisible();
@@ -81,4 +81,16 @@ test("a saved first pass opens in the app with the reconstruction service offlin
   await page.getByRole("button", { name: "Araç sat", exact: true }).click();
   await page.getByRole("button", { name: "Kendi fotoğraf turumu aç" }).click();
   await expect(page.getByRole("heading", { name: "HD 360° fotoğraf turu" })).toBeVisible();
+});
+
+test("connected account photo preparation exposes the local HD capture flow", async ({ page }) => {
+  await page.route("https://hsentdihwpkmgvavzyiq.supabase.co/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
+  await page.route("http://127.0.0.1:4180/**", (route) => route.abort());
+  await page.goto("/");
+  await page.getByRole("navigation", { name: "Ana gezinme" }).getByRole("button", { name: "Hesabım", exact: true }).click();
+  await page.getByRole("button", { name: /Fotoğraflarını hazırla/ }).click();
+  await page.getByRole("button", { name: "HD fotoğraf turu için çekime başla", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Aracın olduğu gibi. Her açıdan, net." })).toBeVisible();
+  await page.getByRole("button", { name: "Çekime başla", exact: true }).click();
+  await expect(page.getByRole("progressbar", { name: "Seçili turun tamamlanması" })).toHaveAttribute("aria-valuemax", "48");
 });

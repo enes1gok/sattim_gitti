@@ -1,0 +1,20 @@
+{
+  "source": {
+    "id": "tofas-history",
+    "name": "Tofaş resmî tarihçe — model adları",
+    "url": "https://www.tofas.com.tr/Hakkimizda/Tarihce",
+    "license": "Factual make/model names only; no website content or images copied",
+    "version": "reviewed-2026-10-29",
+    "attribution": "Model names checked against Tofaş's official history. This supplement does not imply endorsement or a licence to reproduce website content.",
+    "metadata": { "scope": "Murat 131, Şahin, Kartal, Doğan names only; no model-year, trim or engine assertions" }
+  },
+  "makes": [
+    { "slug": "tofas", "name": "Tofaş", "source_id": "tofas-history", "source_key": "tofas", "source_version": "reviewed-2026-10-29" }
+  ],
+  "models": [
+    { "make_slug": "tofas", "slug": "murat-131", "name": "Murat 131", "body_types": [], "aliases": [], "observed_countries": ["tr"], "evidence_sources": ["tofas-history"], "source_id": "tofas-history", "source_key": "tofas/murat-131", "source_version": "reviewed-2026-10-29" },
+    { "make_slug": "tofas", "slug": "sahin", "name": "Şahin", "body_types": [], "aliases": [], "observed_countries": ["tr"], "evidence_sources": ["tofas-history"], "source_id": "tofas-history", "source_key": "tofas/sahin", "source_version": "reviewed-2026-10-29" },
+    { "make_slug": "tofas", "slug": "kartal", "name": "Kartal", "body_types": [], "aliases": [], "observed_countries": ["tr"], "evidence_sources": ["tofas-history"], "source_id": "tofas-history", "source_key": "tofas/kartal", "source_version": "reviewed-2026-10-29" },
+    { "make_slug": "tofas", "slug": "dogan", "name": "Doğan", "body_types": [], "aliases": [], "observed_countries": ["tr"], "evidence_sources": ["tofas-history"], "source_id": "tofas-history", "source_key": "tofas/dogan", "source_version": "reviewed-2026-10-29" }
+  ]
+}

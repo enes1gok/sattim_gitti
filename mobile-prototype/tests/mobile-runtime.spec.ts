@@ -91,7 +91,11 @@ test("BottomSheet remains mounted while its default exit animation plays", async
   await page.locator(".sheet-trigger").click();
   await expect(page.getByTestId("bottom-sheet")).toBeVisible();
 
-  await page.getByTestId("sheet-overlay").click({ position: { x: 8, y: 8 } });
+  const overlay = page.getByTestId("sheet-overlay");
+  const overlayBox = await overlay.boundingBox();
+  if (!overlayBox) throw new Error("Sheet overlay has no bounding box");
+  // The phone clips its rounded corners; tap the visible area above the sheet.
+  await overlay.click({ position: { x: overlayBox.width / 2, y: 80 } });
   await expect(page.getByTestId("bottom-sheet")).toHaveCount(1);
   await page.waitForTimeout(500);
   await expect(page.getByTestId("bottom-sheet")).toHaveCount(0);

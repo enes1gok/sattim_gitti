@@ -12,6 +12,7 @@ import {
 } from "react";
 import { DevicePicker, useMobileDevice } from "./Device";
 import { useMobileCursor } from "./MobileCursor";
+import { isNativeAndroid } from "./native";
 
 type ScreenPortalContextValue = {
   screenRef: RefObject<HTMLDivElement | null>;
@@ -68,6 +69,10 @@ export function PhoneFrame({ children }: PropsWithChildren) {
   const screenRef = useRef<HTMLDivElement | null>(null);
   const contextValue = useMemo(() => ({ screenRef }), []);
   const mobileCursor = useMobileCursor();
+
+  if (isNativeAndroid) {
+    return <ScreenPortalContext.Provider value={contextValue}><div ref={screenRef} className="device-screen native-screen" data-phone-screen data-device="pixel-10" data-testid="device-screen" style={{ "--device-safe-area-bottom": "0px" } as CSSProperties}>{children}</div></ScreenPortalContext.Provider>;
+  }
 
   return (
     <ScreenPortalContext.Provider value={contextValue}>

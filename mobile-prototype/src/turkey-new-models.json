@@ -1,0 +1,265 @@
+{
+  "source": "arabayorum.com Türkiye Sıfır Araç Fiyatları Açık Veri Seti",
+  "url": "https://arabayorum.com/acik-veri",
+  "license": "CC BY 4.0",
+  "retrieved": "2026-10-31",
+  "scope": "Türkiye sıfır araç fiyat kayıtları; ikinci el pazarı tam kapsamlı değildir.",
+  "models": {
+    "Alfa Romeo": [
+      "Junior",
+      "Tonale"
+    ],
+    "Alpine": [
+      "A290"
+    ],
+    "Audi": [
+      "A3",
+      "A5",
+      "A6",
+      "Q2",
+      "Q3",
+      "Q5",
+      "Q7",
+      "Q8"
+    ],
+    "BMW": [
+      "1 Serisi",
+      "2 Serisi",
+      "3 Serisi",
+      "5 Serisi",
+      "7 Serisi",
+      "M4",
+      "X1",
+      "X3",
+      "i5",
+      "i7",
+      "iX1",
+      "iX3"
+    ],
+    "Chery": [
+      "Omoda 5",
+      "Tiggo 7",
+      "Tiggo 8",
+      "Tiggo Life"
+    ],
+    "Citroen": [
+      "Ami",
+      "Berlingo",
+      "C3 Aircross",
+      "C4",
+      "C4 X",
+      "C5 Aircross",
+      "Jumpy",
+      "e-C3"
+    ],
+    "Cupra": [
+      "Formentor",
+      "Leon",
+      "Terramar"
+    ],
+    "DS Automobiles": [
+      "N°4",
+      "N°8"
+    ],
+    "Dacia": [
+      "Duster",
+      "Jogger",
+      "Logan",
+      "Sandero"
+    ],
+    "Fiat": [
+      "500e",
+      "600",
+      "Doblo",
+      "Egea",
+      "Grande Panda",
+      "Scudo",
+      "Topolino"
+    ],
+    "Ford": [
+      "Kuga",
+      "Puma",
+      "Ranger",
+      "Tourneo Courier",
+      "Tourneo Custom",
+      "Transit",
+      "Transit Custom"
+    ],
+    "Honda": [
+      "CR-V",
+      "HR-V",
+      "ZR-V"
+    ],
+    "Hyundai": [
+      "Bayon",
+      "Inster",
+      "Ioniq 3",
+      "Ioniq 5",
+      "Ioniq 6",
+      "Ioniq 9",
+      "Kona",
+      "Staria",
+      "Tucson",
+      "i20",
+      "i30"
+    ],
+    "Jaecoo": [
+      "7",
+      "J7"
+    ],
+    "Jeep": [
+      "Avenger",
+      "Compass",
+      "Compass E-Hybrid"
+    ],
+    "KGM": [
+      "Actyon",
+      "Musso",
+      "Torres",
+      "XEAT"
+    ],
+    "Kia": [
+      "EV2",
+      "EV3",
+      "EV9",
+      "Niro",
+      "Picanto",
+      "Seltos",
+      "Sorento",
+      "Sportage",
+      "Stonic",
+      "XCeed"
+    ],
+    "Lexus": [
+      "LBX"
+    ],
+    "MG": [
+      "HS",
+      "MG7",
+      "ZS"
+    ],
+    "Mercedes-Benz": [
+      "A Serisi",
+      "C Serisi",
+      "CLA",
+      "CLE",
+      "E Serisi",
+      "EQE",
+      "G",
+      "GLA",
+      "GLB",
+      "GLC",
+      "GLE",
+      "Vito"
+    ],
+    "Mini": [
+      "Countryman"
+    ],
+    "Nissan": [
+      "Juke",
+      "Qashqai",
+      "Townstar",
+      "X-Trail"
+    ],
+    "Omoda": [
+      "7",
+      "O7"
+    ],
+    "Opel": [
+      "Astra",
+      "Combo",
+      "Combo Cargo",
+      "Corsa",
+      "Frontera",
+      "Grandland",
+      "Mokka",
+      "Vivaro",
+      "Zafira"
+    ],
+    "Peugeot": [
+      "2008",
+      "3008",
+      "308",
+      "408",
+      "5008",
+      "Expert",
+      "Rifter"
+    ],
+    "Renault": [
+      "5",
+      "Austral",
+      "Boreal",
+      "Captur",
+      "Clio",
+      "Duster",
+      "Kangoo",
+      "Master",
+      "Megane",
+      "Megane E-Tech",
+      "Megane Sedan",
+      "Rafale",
+      "Scenic",
+      "Trafic"
+    ],
+    "Seat": [
+      "Arona",
+      "Ateca",
+      "Ibiza",
+      "Leon"
+    ],
+    "Skoda": [
+      "Elroq",
+      "Enyaq",
+      "Fabia",
+      "Kamiq",
+      "Karoq",
+      "Kodiaq",
+      "Octavia",
+      "Scala",
+      "Superb"
+    ],
+    "Suzuki": [
+      "S-Cross",
+      "Vitara"
+    ],
+    "Tesla": [
+      "Model 3",
+      "Model Y"
+    ],
+    "Togg": [
+      "T10F",
+      "T10X"
+    ],
+    "Toyota": [
+      "C-HR",
+      "Corolla",
+      "Corolla Cross",
+      "Hilux",
+      "Land Cruiser Prado",
+      "Proace City",
+      "Proace Verso",
+      "Yaris",
+      "Yaris Cross"
+    ],
+    "Volkswagen": [
+      "Amarok",
+      "Golf",
+      "ID. 7",
+      "Passat",
+      "T-Cross",
+      "T-Roc",
+      "Taigo",
+      "Tayron",
+      "Tiguan",
+      "Touareg",
+      "Transporter"
+    ],
+    "Volvo": [
+      "EX30",
+      "EX40",
+      "V60",
+      "XC60",
+      "XC90"
+    ]
+  }
+}

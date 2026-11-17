@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/vehiclesdb/vehiclesdb",
+  "commit": "d0e40c9661e36931089db1213ac383d2d7ba5a7a",
+  "retrieved_at": "2026-10-29",
+  "scope": "car",
+  "upstream_sha256": {
+    "makes.json": "c8bf58a58afe159dddfdd06f1e8d7a533fa9865c5e013568df373b06395b55ba",
+    "models.json": "6f9b9b53f9cf51d8ce153a7ca0ee4914ac6acde7ebdd5bcf13c4b4bcf7ad62f8"
+  },
+  "modifications": "Passenger cars only; projected make/model identity, aliases, body types, evidence source IDs and observed countries. Omitted popularity, xrefs and other vehicle kinds. No inferred years or specifications.",
+  "catalog_sha256": "fd76201a227f56ec1f0e260b039ec9c616bf1635b3a9b825738afb813e8ef372"
+}

@@ -13,6 +13,7 @@ import {
 import { motion } from "motion/react";
 import { mobileAssets } from "./assets";
 import { useMobileDevice } from "./Device";
+import { isNativeAndroid } from "./native";
 
 type KeyboardContextValue = {
   visible: boolean;
@@ -60,7 +61,7 @@ export function KeyboardProvider({ children }: PropsWithChildren) {
         setRawDragOffset(0);
         setDragging(false);
         setFocusedElement(element ?? null);
-        setVisible(true);
+        setVisible(!isNativeAndroid);
       },
       hide: () => {
         focusedElement?.blur();
