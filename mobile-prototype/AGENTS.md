@@ -20,6 +20,14 @@
 - Last executed search, followed search criteria, notification choices and the example favorite persist in localStorage on this browser. Plain listing photos remain session-only; scan drafts retain their existing IndexedDB persistence. Notifications default off and no OS permission is requested.
 - Filter changes remain drafts until Sonuçları göster; dismissing the sheet discards pending changes. MobileScroll already subtracts keyboard height: app-owned marketplace bounds reserve only navigation/safe areas, avoiding double keyboard subtraction. Preserve the app-owned focus handling so a blur cannot move a button during its tap.
 
+## Original-photo tour decisions
+
+- The user approved original-photo HD orbit tours as the primary presentation after comparing the Togg configurator. Free-orbit reconstructed 3D remains an optional additional view; it must never replace original evidence photos.
+- `VehicleTour.tsx` displays original local capture URLs without synthesis, interpolation, resizing or background replacement. Group by capture height, then direction, preserving within-direction capture order. Keep these personal draft photos separate from the fictional marketplace listing.
+- The first pass (8 directions × 6 distinct photos = 48) unlocks the planned HD 360° tour without a reconstruction service or the other two passes. Partial collections remain viewable as “Fotoğraf önizlemesi”; stop at endpoints rather than looping over missing sections. Direction counts are capture-plan completion, not measured geometric coverage.
+- Retain original downloads, bounded adjacent-frame preloading, keyboard/frame controls, detail zoom and visible image-load recovery. Do not preload an entire scan into decoded image memory. The complete 144-photo policy remains required for optional 3D generation.
+- Old real-car dataset frames can be used only in git-ignored QA previews, with estimated direction/height grouping clearly disclosed. Their changing camera distance and framing must not be presented as a newly validated smooth 48-frame capture.
+
 ## Guided capture decisions
 
 - The user clarified that their own photographed vehicle must be reconstructed. A generic mesh does not fulfill that outcome. `CaptureFlow.tsx` and `CaptureCamera.tsx` implement guided camera/gallery capture in the approved white UI.
@@ -31,6 +39,8 @@
 - An optional **Gerçekçi görünüm hazırla** step learns Gaussian appearance locally with Brush from photo-estimated poses/intrinsics and sparse points (macOS 26); it is separate from the immediately usable GLB. Keep real job status, preserve the geometry on training failure, stop both jobs on scan deletion, and retain the same privacy/retention rules. `VehicleAppearance.tsx` uses lazily loaded Spark with on-demand drawing; user models have no sample findings. Frame and filter against actual mesh surfaces, not Object Capture's padded capture volume. Never imply image quality proves damage or paint accuracy.
 - Gaussian training must use foreground alpha masks projected from the actual reconstructed mesh into each calibrated photo (`RenderMasks.swift`). Training on the full background caused ghosting and ground streaks; post-cropping alone did not fix it. Keep original photos intact, rescale camera intrinsics with training images, and preserve GLB fallback. Initial framing must account for perspective depth rather than guessing a fixed camera distance.
 - The 128-photo real Volkswagen comparison and Gaussian run are documented in `qa/real-car-test.md`. Surface/measurement/damage accuracy and the physical guided camera flow are not certified. Source photos/models and screenshots stay under git-ignored `.local/real-car-test/`, not shipped app assets. Remaining reflective-window and ground artifacts must be reported honestly; do not replace them with generated car imagery.
+- Both geometry and Gaussian viewers fit actual model bounds for reset, top view and viewport changes; fixed camera distances must not clip portrait or wide-body models.
+- If optional Gaussian download or validation fails, open the validated GLB and show a visible explanation. Geometry download/validation failures remain errors; never substitute a demo.
 - This is a local development pipeline, not a public multi-user service. Static hosting does not deploy the Node/Swift worker. Native iOS/Android apps and production infrastructure remain separate work.
 
 ## Prototype Instructions

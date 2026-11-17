@@ -5,7 +5,7 @@ export function fitVehicleCamera(camera: THREE.PerspectiveCamera, bounds: THREE.
   const back = direction.clone().normalize();
   const right = new THREE.Vector3().crossVectors(camera.up, back).normalize();
   const up = new THREE.Vector3().crossVectors(back, right);
-  const tanY = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const tanY = Math.tan(THREE.MathUtils.degToRad(camera.getEffectiveFOV() / 2));
   const tanX = tanY * camera.aspect;
   let distance = 0;
   for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) {

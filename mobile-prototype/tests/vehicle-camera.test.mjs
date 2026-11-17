@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { fitVehicleCamera } from "../src/vehicle-camera.ts";
 
 test("complete vehicle stays inside the initial frame across viewport and body proportions", () => {
-  for (const aspect of [.8, 1.275, 1.397, 2]) for (const dimensions of [[1.6, .8, 3], [3, 1, 1.7], [2, 2.5, 3]]) {
+  for (const aspect of [.35, .8, 1.275, 1.397, 2, 3]) for (const dimensions of [[1.6, .8, 3], [3, 1, 1.7], [2, 2.5, 3]]) {
     const [w, h, d] = dimensions;
     const bounds = new THREE.Box3(new THREE.Vector3(-w / 2, 0, -d / 2), new THREE.Vector3(w / 2, h, d / 2));
     const camera = new THREE.PerspectiveCamera(57, aspect, .05, 60);
@@ -12,6 +12,22 @@ test("complete vehicle stays inside the initial frame across viewport and body p
     for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) {
       const point = new THREE.Vector3(x, y, z).project(camera);
       assert.ok(Math.abs(point.x) <= .901 && Math.abs(point.y) <= .901 && point.z > -1 && point.z < 1);
+    }
+  }
+});
+
+test("mesh and appearance frame top and oblique views with narrow lenses and zoom", () => {
+  const bounds = new THREE.Box3(new THREE.Vector3(-1.5, 0, -.8), new THREE.Vector3(1.5, 1.4, .8));
+  for (const fov of [34, 57]) for (const aspect of [.35, .8, 2]) for (const zoom of [1, 2]) {
+    for (const direction of [new THREE.Vector3(.001, 1, 0), new THREE.Vector3(3.3, 2.2, 3.7)]) {
+      const camera = new THREE.PerspectiveCamera(fov, aspect, .05, 60);
+      camera.zoom = zoom;
+      camera.updateProjectionMatrix();
+      fitVehicleCamera(camera, bounds, bounds.getCenter(new THREE.Vector3()), direction);
+      for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) {
+        const point = new THREE.Vector3(x, y, z).project(camera);
+        assert.ok(Math.abs(point.x) <= .901 && Math.abs(point.y) <= .901 && point.z > -1 && point.z < 1);
+      }
     }
   }
 });

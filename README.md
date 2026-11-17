@@ -55,3 +55,14 @@ Yerel fotoğraftan 3D servisi, kurulum ve test sınırları: [Reconstruction REA
 ## Branch ayrımı
 
 Bu branch (`codex/vehicle-3d-lab`) deneysel 3D görüntüleme, yönlendirmeli çekim, yüksek ayrıntılı yerel geometri ve Gaussian görünüm hattını saklar. Ana geliştirme branch’inde yalnızca fotoğraf yükleme akışı vardır. Kaynak fotoğraf ve üretilen modeller git dışındadır.
+
+## HD fotoğraf turu (deneysel branch)
+
+`codex/vehicle-3d-lab` üzerinde ana inceleme, kullanıcının özgün fotoğraflarından
+oluşan HD turdur. Çevre turunda sekiz yön × altı kare tamamlanınca 48 fotoğraflık
+tur, 3D servisine bağlanmadan açılır. Eksik çekimler fotoğraf önizlemesi olarak
+gösterilir. Sürükleme, klavye kontrolleri, 2× ayrıntı görünümü ve özgün dosyayı
+indirme desteklenir. Yön sayıları geometrik kapsam doğrulaması değildir.
+
+Taslaklar IndexedDB'de saklanır. Yüksek/alçak açı turlarıyla tamamlanan 144 karelik
+plan, isteğe bağlı yerel 3D üretimi içindir. HD turda yapay kare veya yüzey üretilmez.

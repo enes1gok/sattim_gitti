@@ -1,3 +1,4 @@
+import { validateModelFile } from "./model-file";
 import type { CaptureDescriptor } from "./capture-policy";
 import { validateAppearanceFile, validateAppearanceBounds, type AppearanceBounds, type AppearanceModel } from "./appearance-file";
 
@@ -52,4 +53,16 @@ export async function loadAppearance(job: ReconstructionJob): Promise<Appearance
   if (!response.ok) throw new Error("Gerçekçi görünüm açılamadı. Yeniden dene.");
   const buffer = await response.arrayBuffer(); validateAppearanceFile(buffer);
   return { buffer, bounds: job.appearanceBounds };
+}
+
+/** Geometry remains usable when the optional appearance download is unavailable. */
+export async function loadReconstructionPreview(job: ReconstructionJob, geometryOnly = false): Promise<{ buffer: ArrayBuffer; appearance?: AppearanceModel; warning?: string }> {
+  const buffer = await loadReconstruction(job.id);
+  validateModelFile(buffer);
+  if (geometryOnly || job.appearanceStatus !== "ready") return { buffer };
+  try {
+    return { buffer, appearance: await loadAppearance(job) };
+  } catch {
+    return { buffer, warning: "Gerçekçi görünüm yüklenemedi. 3D geometri açıldı; gerçekçi görünümü çekim ekranından yeniden deneyebilirsin." };
+  }
 }

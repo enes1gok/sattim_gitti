@@ -1,13 +1,14 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, useMemo, type ChangeEvent, type CSSProperties } from "react";
 import { ArrowLeftIcon, ArrowRightIcon, CalendarBlankIcon, CameraIcon, CaretDownIcon, CaretRightIcon, CarProfileIcon, CarSimpleIcon, CheckCircleIcon, CheckIcon, CubeIcon, EngineIcon, FileTextIcon, GasPumpIcon, GaugeIcon, GearIcon, HeartIcon, ImagesIcon, InfoIcon, MagnifyingGlassIcon, MapPinIcon, PlusIcon, BookmarkSimpleIcon, ShieldCheckIcon, SparkleIcon, TrashIcon, UserIcon, XIcon } from "@phosphor-icons/react";
 import { BottomSheet, MobileScroll, useKeyboard, useKeyboardInsets, useMobileDevice, useScreenPortal } from "./mobile";
 import { advertisementSpecs, demoListing, equipmentGroups, historySpecs, technicalSpecs, type EquipmentGroup } from "./listing-data";
 import Marketplace, { type MarketplaceTab } from "./Marketplace";
+import VehicleTour from "./VehicleTour";
 import CaptureFlow, { useCaptureSession } from "./CaptureFlow";
 import "@fontsource-variable/inter";
 
 const Vehicle3D = lazy(() => import("./Vehicle3D"));
-type Sheet = "finding" | "photos" | "sell" | "model" | "capture" | null;
+type Sheet = "finding" | "photos" | "sell" | "model" | "capture" | "tour" | null;
 type Photo = { id: string; url: string; name: string };
 type Part = "door" | "hood";
 const PHOTO_LIMIT = 8;
@@ -18,6 +19,7 @@ export default function Prototype() {
   const { bottomInset } = useKeyboardInsets();
   const [sheet, setSheet] = useState<Sheet>(null);
   const captureSession = useCaptureSession();
+  const tourPhotos = useMemo(() => captureSession.photos.map((photo) => ({ id: photo.id, angle: photo.angle, pass: photo.pass, url: photo.url, name: photo.file.name })), [captureSession.photos]);
   const [generatedModel, setGeneratedModel] = useState<import("./Vehicle3D").VehicleModelSource>();
   const [view, setView] = useState<"perspective" | "top">("perspective");
   const [part, setPart] = useState<Part>("door");
@@ -111,7 +113,7 @@ export default function Prototype() {
     setSheet("finding");
   }
   const titles: Record<Exclude<Sheet, null>, string> = {
-    finding: partName, photos: "Fotoğrafların", sell: "Aracını satmaya başla.", model: "3D inceleme", capture: "Aracını tara",
+    finding: partName, photos: "Fotoğrafların", sell: "Aracını satmaya başla.", model: "Ek 3D görünüm", capture: "Aracını çek", tour: "HD fotoğraf turu",
   };
 
   return (
@@ -184,16 +186,17 @@ export default function Prototype() {
         </main>
       </MobileScroll>}
       <footer className="app-footer">
-        {listingOpen && <button className="primary-button" onClick={() => setSheet("capture")}><CameraIcon size={25} weight="light" /><span>{captureSession.photos.length ? "Taramaya devam et" : "Aracını tara"}</span></button>}
+        {listingOpen && <button className="primary-button" onClick={() => setSheet("capture")}><CameraIcon size={25} weight="light" /><span>{captureSession.photos.length ? "Çekime devam et" : "HD tur için çekime başla"}</span></button>}
         <nav className="bottom-nav" aria-label="Ana gezinme">
           {([{ id: "explore", label: "Keşfet", Icon: MagnifyingGlassIcon }, { id: "tracking", label: "Takip", Icon: BookmarkSimpleIcon }, { id: "favorites", label: "Favoriler", Icon: HeartIcon }, { id: "account", label: "Hesabım", Icon: UserIcon }] as const).map(({ id, label, Icon }) => <button key={id} className={(activeTab === id) ? "selected" : ""} aria-current={(activeTab === id) ? "page" : undefined} onClick={() => navigate(id)}><Icon size={25} weight={(activeTab === id) ? "fill" : "light"} /><span>{label}</span></button>)}
         </nav>
         {favoriteStorageError && <span className="favorite-storage-error" role="status">Favorin yalnızca bu oturumda saklanıyor.</span>}
       </footer>
       <input ref={fileInput} className="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple tabIndex={-1} aria-label="Araç fotoğraflarını seç" onChange={addPhotos} disabled={reading} />
-      <BottomSheet open={sheet !== null} onOpenChange={(open) => { if (!open) setSheet(null); }} title={sheet ? titles[sheet] : ""} description={sheet === "capture" ? "Kendi aracından gerçek bir 3D model." : sheet === "photos" ? "Aracın farklı açılarını ekle." : sheet === "finding" ? "Örnek araç üzerindeki parça bilgisi." : sheet === "model" ? "Döndür, yakınlaş, parçaları keşfet." : "Fotoğraflarınla ilk adımı at."} snap={sheet === "capture" || sheet === "model" ? 0.92 : sheet === "photos" ? 0.82 : 0.73}>
+      <BottomSheet open={sheet !== null} onOpenChange={(open) => { if (!open) setSheet(null); }} title={sheet ? titles[sheet] : ""} description={sheet === "capture" ? "Önce HD fotoğraf turu, istersen ek 3D görünüm." : sheet === "photos" ? "Aracın farklı açılarını ekle." : sheet === "finding" ? "Örnek araç üzerindeki parça bilgisi." : sheet === "model" ? "Döndür, yakınlaş, parçaları keşfet." : "Fotoğraflarınla ilk adımı at."} snap={sheet === "capture" || sheet === "model" || sheet === "tour" ? 0.92 : sheet === "photos" ? 0.82 : 0.73}>
         <button className="sheet-close icon-button" aria-label="Paneli kapat" onClick={() => setSheet(null)}><XIcon size={20} /></button>
-        {sheet === "capture" && <CaptureFlow session={captureSession} onModel={(model) => { setGeneratedModel({ name: "Aracının 3D modeli", ...model, reconstructed: true }); setSheet("model"); }} />}
+        {sheet === "capture" && <CaptureFlow session={captureSession} onTour={() => setSheet("tour")} onModel={(model) => { setGeneratedModel({ name: "Aracının 3D modeli", ...model, reconstructed: true }); setSheet("model"); }} />}
+        {sheet === "tour" && <><VehicleTour photos={tourPhotos} /><button className="secondary-button" onClick={() => setSheet("capture")}><CameraIcon size={22} />Çekimleri düzenle / tamamla</button>{generatedModel && <button className="scan-text-button" onClick={() => setSheet("model")}><CubeIcon size={20} />Ek 3D görünümü aç</button>}</>}
         {sheet === "model" && <Suspense fallback={<div className="model-loading" role="status">3D görüntüleyici açılıyor…</div>}><Vehicle3D initialModel={generatedModel} onPartSelect={(selected) => openFinding(selected, true)} /></Suspense>}
         {sheet === "finding" && <div className="detail-content">
           <span className={`status-label ${part === "hood" ? "neutral" : ""}`}>{part === "door" ? "Olası çizik" : "İncelenmedi"}</span>
@@ -212,7 +215,7 @@ export default function Prototype() {
           <button className="primary-button" disabled={reading || photos.length >= PHOTO_LIMIT} onClick={() => fileInput.current?.click()}><CameraIcon size={22} />{reading ? "Açılıyor…" : photos.length ? "Başka fotoğraf ekle" : "Galeriden seç"}</button>
           {photos.length > 0 && <button className="secondary-button" onClick={() => setSheet(null)}><CheckCircleIcon size={20} />Araca dön</button>}
         </div>}
-        {sheet === "sell" && <div className="sell-content"><div className="sell-intro"><CameraIcon size={34} weight="light" /><h2>Aracınla başlayalım.</h2><p>Fotoğraflarını ekle veya yönlendirmeli çekimle aracının 3D modelini oluştur.</p></div><button className="primary-button" onClick={() => setSheet("capture")}><CameraIcon size={22} />{captureSession.photos.length ? "Taramaya devam et" : "Aracını tara"}<ArrowRightIcon size={21} /></button><button className="secondary-button" onClick={() => setSheet("photos")}><ImagesIcon size={22} />İlan fotoğraflarını ekle</button><p className="market-data-note">Bu prototipte fotoğraf hazırlayabilirsin. İlan yayınlama ve satıcı iletişimi henüz bağlı değil.</p></div>}
+        {sheet === "sell" && <div className="sell-content">{tourPhotos.length > 0 && <button className="primary-button" onClick={() => setSheet("tour")}><ImagesIcon size={22} />Kendi fotoğraf turumu aç</button>}<div className="sell-intro"><CameraIcon size={34} weight="light" /><h2>Aracınla başlayalım.</h2><p>Çevresinde bir tur çek, orijinal fotoğraflarla HD turunu hemen incele. İstersen ek çekimlerle 3D görünüm de oluştur.</p></div><button className={tourPhotos.length ? "secondary-button" : "primary-button"} onClick={() => setSheet("capture")}><CameraIcon size={22} />{captureSession.photos.length ? "Çekime devam et" : "HD tur için çekime başla"}<ArrowRightIcon size={21} /></button><button className="secondary-button" onClick={() => setSheet("photos")}><ImagesIcon size={22} />İlan fotoğraflarını ekle</button><p className="market-data-note">Bu prototipte fotoğraf hazırlayabilirsin. İlan yayınlama ve satıcı iletişimi henüz bağlı değil.</p></div>}
       </BottomSheet>
     </div>
   );

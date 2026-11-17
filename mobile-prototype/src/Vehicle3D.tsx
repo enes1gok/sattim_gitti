@@ -5,8 +5,9 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { validateModelFile } from "./model-file";
 import type { AppearanceModel } from "./appearance-file";
+import { fitVehicleCamera } from "./vehicle-camera";
 
-export type VehicleModelSource = { name: string; buffer?: ArrayBuffer; reconstructed?: boolean; appearance?: AppearanceModel };
+export type VehicleModelSource = { name: string; buffer?: ArrayBuffer; reconstructed?: boolean; appearance?: AppearanceModel; warning?: string };
 type Source = VehicleModelSource;
 type Commands = { rotate: (direction: number) => void; zoom: (factor: number) => void; reset: () => void; top: () => void };
 type Props = { onPartSelect: (part: "door" | "hood") => void; initialModel?: Source; embedded?: boolean };
@@ -108,6 +109,7 @@ function MeshVehicle3D({ onPartSelect, initialModel, embedded }: Props) {
     scene.add(floor);
     let model: THREE.Group | null = null;
     let modelHeight = 1.3;
+    let framedBounds: THREE.Box3 | undefined;
     let width = 1;
     let height = 1;
     const render = () => {
@@ -127,9 +129,15 @@ function MeshVehicle3D({ onPartSelect, initialModel, embedded }: Props) {
         element.style.top = `${(-point.y * 0.5 + 0.5) * height}px`;
       }
     };
+    const frame = (direction: THREE.Vector3) => {
+      if (!framedBounds) return;
+      fitVehicleCamera(camera, framedBounds, controls.target, direction);
+      controls.maxDistance = Math.max(10, camera.position.distanceTo(controls.target) * 2);
+    };
     const reset = () => {
-      controls.target.set(0, modelHeight * 0.45, 0);
-      camera.position.set(3.3, 2.2, 3.7);
+      controls.target.set(0, modelHeight * 0.5, 0);
+      if (framedBounds) frame(new THREE.Vector3(3.3, 2.2, 3.7));
+      else camera.position.set(3.3, 2.2, 3.7);
       controls.update();
       render();
     };
@@ -137,7 +145,7 @@ function MeshVehicle3D({ onPartSelect, initialModel, embedded }: Props) {
       rotate: (direction) => { controls.rotateLeft(direction * Math.PI / 6); controls.update(); },
       zoom: (factor) => { camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target); controls.update(); },
       reset,
-      top: () => { controls.target.set(0, modelHeight * 0.45, 0); camera.position.set(0.001, 6, 0); controls.update(); },
+      top: () => { controls.target.set(0, modelHeight * 0.5, 0); frame(new THREE.Vector3(0.001, 1, 0)); controls.update(); },
     };
     controls.addEventListener("change", render);
     const observer = new ResizeObserver(() => {
@@ -146,6 +154,8 @@ function MeshVehicle3D({ onPartSelect, initialModel, embedded }: Props) {
       renderer.setSize(width, height);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      frame(camera.position.clone().sub(controls.target));
+      controls.update();
       render();
     });
     observer.observe(container);
@@ -192,6 +202,7 @@ function MeshVehicle3D({ onPartSelect, initialModel, embedded }: Props) {
         });
         scene.add(model);
         model.updateMatrixWorld(true);
+        framedBounds = new THREE.Box3().setFromObject(model);
         reset();
         setPhase("ready");
       } catch (reason) {
@@ -235,6 +246,7 @@ function MeshVehicle3D({ onPartSelect, initialModel, embedded }: Props) {
   const ready = phase === "ready";
   return <div className="model-viewer">
     <div className="model-identity"><span className="eyebrow">{source.reconstructed ? "ÇEKİMLERİNDEN OLUŞTURULDU" : source.buffer ? "YEREL MODEL" : "ÖRNEK 3D MODEL"}</span><strong>{source.name}</strong><p>{source.reconstructed ? "Görsel model · Hasar analizi ve parça eşleştirmesi yapılmadı." : source.buffer ? "İlanla parça eşleştirmesi yapılmadı." : "Genel SUV modeli · İlanla eşleştirilmedi."}</p></div>
+    {source.warning && <p className="scan-privacy" role="status">{source.warning}</p>}
     <div className="model-stage" ref={host} data-scroll-drag="ignore" tabIndex={0} role="group" aria-label="Etkileşimli 3D model; ok tuşlarıyla döndür, artı ve eksiyle yakınlaştır" onKeyDown={(event) => {
       if (!ready) return;
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); commands.current?.rotate(event.key === "ArrowLeft" ? 1 : -1); }

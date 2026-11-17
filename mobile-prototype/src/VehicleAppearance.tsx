@@ -46,14 +46,27 @@ export default function VehicleAppearance({ model, name, onFallback }: { model: 
         splat.scale.setScalar(scale); splat.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale); scene.add(splat);
         const targetY = size.y * scale * .5;
         const framedBounds = new THREE.Box3(new THREE.Vector3(-size.x * scale / 2, 0, -size.z * scale / 2), new THREE.Vector3(size.x * scale / 2, size.y * scale, size.z * scale / 2));
-        const reset = () => { controls!.target.set(0, targetY, 0); fitVehicleCamera(camera, framedBounds, controls!.target, new THREE.Vector3(2.3, .4, 1.05)); controls!.update(); requestRender(); };
+        const frame = (direction: THREE.Vector3) => {
+          fitVehicleCamera(camera, framedBounds, controls!.target, direction);
+          controls!.maxDistance = Math.max(6, camera.position.distanceTo(controls!.target) * 2);
+        };
+        const reset = () => { controls!.target.set(0, targetY, 0); frame(new THREE.Vector3(2.3, .4, 1.05)); controls!.update(); requestRender(); };
         commands.current = {
           reset,
           rotate: (direction) => { controls!.rotateLeft(direction * Math.PI / 6); controls!.update(); },
           zoom: (factor) => { camera.position.sub(controls!.target).multiplyScalar(factor).add(controls!.target); controls!.update(); },
-          top: () => { camera.position.set(.001, 5, 0); controls!.update(); },
+          top: () => { controls!.target.set(0, targetY, 0); frame(new THREE.Vector3(.001, 1, 0)); controls!.update(); },
         };
-        const resize = () => { if (!renderer) return; renderer.setSize(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight)); camera.aspect = container.clientWidth / Math.max(1, container.clientHeight); camera.updateProjectionMatrix(); requestRender(); };
+        const resize = () => {
+          if (!renderer) return;
+          const width = Math.max(1, container.clientWidth), height = Math.max(1, container.clientHeight);
+          renderer.setSize(width, height);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+          if (camera.position.distanceTo(controls!.target) > 0) frame(camera.position.clone().sub(controls!.target));
+          controls!.update();
+          requestRender();
+        };
         observer = new ResizeObserver(resize);
         observer.observe(container); resize(); reset();
         renderer.domElement.addEventListener("webglcontextlost", (event) => { event.preventDefault(); if (!disposed) { setReady(false); setError("Gerçekçi görünüm bu cihazda durakladı. Geometri görünümüyle devam edebilirsin."); } });
